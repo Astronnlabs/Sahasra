@@ -28,6 +28,8 @@ export interface WorkspaceSettings {
   invoiceTerms?: string;
   /** Which POS tab opens first (salons default to services). */
   posFirstTab?: 'product' | 'service' | 'package';
+  /** Send each bill to the customer's WhatsApp (Settings → E-Billing). */
+  eBillingEnabled?: boolean;
   [key: string]: unknown;
 }
 

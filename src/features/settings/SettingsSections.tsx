@@ -54,7 +54,7 @@ function SwitchRow({ title, description, checked, onChange }: { title: string; d
 }
 
 /** Saves business settings on the server, then reloads the session so every screen sees them. */
-function useSaveSettings(label: string) {
+export function useSaveSettings(label: string) {
   const { refresh } = useAuth();
   return useAppMutation(async (patch: Record<string, string | number | boolean | null>) => {
     await workspaceService.updateSettings(patch);

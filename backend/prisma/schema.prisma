@@ -45,6 +45,9 @@ model Tenant {
   /// End of plan/service validity — billing becomes due after this date.
   planValidTo   DateTime?
   logoUploadId  String?
+  /// E-billing wallet (₹). The whole balance expires 30 days after the last top-up.
+  walletBalance   Decimal   @default(0) @db.Decimal(12, 2)
+  walletExpiresAt DateTime?
   settings      Json      @default("{}")
   invoiceSeq    Int       @default(0)
   orderSeq      Int       @default(0)
@@ -95,6 +98,10 @@ model Tenant {
   uploads          Upload[]
   customerNotes    CustomerNote[]
   referrals        Referral[]
+  whatsAppSetup    WhatsAppSetup?
+  walletTxns       WalletTxn[]
+  walletTopups     WalletTopup[]
+  billMessages     BillMessage[]
 
   @@index([status])
   @@index([createdAt])
@@ -906,4 +913,79 @@ model JobCard {
 
   @@unique([tenantId, number])
   @@index([tenantId, status])
+}
+
+// ════════ E-billing (WhatsApp) & wallet ════════
+
+/// The business's own WhatsApp Business (Cloud API) number used to send bills.
+model WhatsAppSetup {
+  tenantId       String   @id
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  phoneNumberId  String
+  wabaId         String
+  displayPhone   String   @default("")
+  verifiedName   String   @default("")
+  /// Permanent access token, AES-256-GCM encrypted. Never sent to the browser.
+  tokenEnc       String
+  templateName   String   @default("sahasra_bill_thank_you")
+  templateLang   String   @default("en")
+  /// NOT_CREATED | PENDING | APPROVED | REJECTED | PAUSED | DISABLED
+  templateStatus String   @default("NOT_CREATED")
+  templateReason String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+/// Every change to a wallet balance. amount is signed: + credit, - debit.
+model WalletTxn {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// topup | charge | refund | expired | adjustment
+  kind         String
+  amount       Decimal  @db.Decimal(12, 2)
+  balanceAfter Decimal  @db.Decimal(12, 2)
+  description  String
+  reference    String?
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+}
+
+/// A PayU payment started to recharge the wallet.
+model WalletTopup {
+  id          String    @id @default(cuid())
+  txnid       String    @unique
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  amount      Decimal   @db.Decimal(12, 2)
+  /// pending | success | failed
+  status      String    @default("pending")
+  payuId      String?
+  mode        String?
+  error       String?
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([tenantId, createdAt])
+}
+
+/// The WhatsApp thank-you message for one bill (at most one per bill).
+model BillMessage {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  saleId      String   @unique
+  invoiceNo   String
+  customer    String   @default("")
+  to          String
+  /// sending | sent | failed | skipped
+  status      String
+  waMessageId String?
+  error       String?
+  charged     Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, createdAt])
 }

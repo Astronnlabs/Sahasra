@@ -21,3 +21,14 @@ services:
         sync: false
       - key: UPLOAD_DIR
         value: ./uploads
+      # E-billing (WhatsApp) and wallet recharge (PayU). Set the values in the Render dashboard.
+      - key: TOKEN_ENCRYPTION_KEY
+        sync: false
+      - key: PAYU_KEY
+        sync: false
+      - key: PAYU_SALT
+        sync: false
+      - key: PAYU_MODE
+        value: live
+      - key: EBILL_PRICE
+        value: "0.25"

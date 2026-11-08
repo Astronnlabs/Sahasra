@@ -3,6 +3,7 @@ import { Router, type Request } from 'express';
 import { z } from 'zod';
 import { db } from '../db.js';
 import { audit } from '../lib/audit.js';
+import { sendBillInBackground } from '../lib/ebill.js';
 import { badRequest, notFound } from '../lib/http.js';
 import { saleOut } from '../lib/mappers.js';
 import type { BillLine } from '../lib/pricing.js';
@@ -184,5 +185,6 @@ jobsRouter.post('/job-cards/:id/deliver', requireTenant, guard('job-cards', 'edi
     return { sale, job };
   });
   await audit(req, 'edited', 'Job cards', j.number, `Delivered · invoice ${result.sale.invoiceNo}`);
+  sendBillInBackground(tid(req), result.sale.id);
   res.json({ job: jobOut(result.job), sale: saleOut(result.sale) });
 });

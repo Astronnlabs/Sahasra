@@ -3,6 +3,7 @@ import { Router, type Request } from 'express';
 import { z } from 'zod';
 import { db, type Tx } from '../db.js';
 import { audit, notify } from '../lib/audit.js';
+import { sendBillInBackground } from '../lib/ebill.js';
 import { crud } from '../lib/crud.js';
 import { badRequest, forbidden, notFound } from '../lib/http.js';
 import { purchaseOut, saleOut, vendorOut } from '../lib/mappers.js';
@@ -73,6 +74,7 @@ transactionsRouter.post('/sales/checkout', requireTenant, guard('pos', 'create')
 
   const sale = await db.$transaction((tx) => createSale(tx, req, b, { canFreeText: req.auth!.permissions === 'all' }));
   await audit(req, 'created', 'Sales', sale.invoiceNo, `Invoice for ₹${num(sale.total)} via ${sale.payment}`);
+  sendBillInBackground(tid(req), sale.id);
   res.status(201).json(saleOut(sale));
 });
 

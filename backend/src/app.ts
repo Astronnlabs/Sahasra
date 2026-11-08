@@ -11,6 +11,7 @@ import { adminRouter } from './routes/admin.js';
 import { analyticsRouter } from './routes/analytics.js';
 import { authRouter } from './routes/auth.js';
 import { catalogRouter } from './routes/catalog.js';
+import { ebillingRouter, payuReturnRouter } from './routes/ebilling.js';
 import { industryRouter } from './routes/industry.js';
 import { jobsRouter } from './routes/jobs.js';
 import { peopleRouter } from './routes/people.js';
@@ -26,7 +27,15 @@ export function createApp() {
   // Behind Render's load balancer in production, trust the first proxy hop so
   // req.ip (rate limiting) and req.secure reflect the real client.
   app.set('trust proxy', config.isProd ? 1 : 'loopback');
-  app.use(helmet({ contentSecurityPolicy: config.isProd ? undefined : false, crossOriginResourcePolicy: { policy: 'same-origin' } }));
+  app.use(
+    helmet({
+      // The wallet recharge form posts to PayU's checkout, so PayU is an allowed form target.
+      contentSecurityPolicy: config.isProd ? { directives: { formAction: ["'self'", 'https://*.payu.in'] } } : false,
+      crossOriginResourcePolicy: { policy: 'same-origin' },
+    }),
+  );
+  // PayU posts the payment result here (form-encoded, no session, no CSRF header).
+  app.use('/api', payuReturnRouter);
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
 
@@ -54,6 +63,7 @@ export function createApp() {
   api.use(jobsRouter);
   api.use(adminRouter);
   api.use(analyticsRouter);
+  api.use(ebillingRouter);
   api.use(() => {
     throw notFound('API route');
   });

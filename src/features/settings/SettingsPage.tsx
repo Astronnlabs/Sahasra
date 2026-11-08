@@ -1,10 +1,12 @@
-import { Bell, CreditCard, Database, FileText, Gift, Palette, Printer, ShieldCheck, ShoppingCart, Store, type LucideIcon } from 'lucide-react';
+import { Bell, CreditCard, Database, FileText, Gift, MessageCircle, Palette, Printer, ShieldCheck, ShoppingCart, Store, Wallet, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
+import { EBillingSection } from './EBillingSection';
 import { PrinterSettings } from './PrinterSettings';
+import { WalletSection } from './WalletSection';
 import { ReferSection } from './ReferSection';
 import { Appearance, Backup, BusinessProfile, InvoiceSettings, NotificationSettings, PaymentMethods, PosSettings, Security } from './SettingsSections';
 
@@ -14,6 +16,8 @@ const SECTIONS: { id: string; label: string; icon: LucideIcon; render: () => Rea
   { id: 'invoice', label: 'Invoice Settings', icon: FileText, render: () => <InvoiceSettings /> },
   { id: 'pos', label: 'Billing & POS', icon: ShoppingCart, render: () => <PosSettings />, support: true },
   { id: 'payments', label: 'Payments', icon: CreditCard, render: () => <PaymentMethods />, support: true },
+  { id: 'ebilling', label: 'E-Billing (WhatsApp)', icon: MessageCircle, render: () => <EBillingSection /> },
+  { id: 'wallet', label: 'Wallet', icon: Wallet, render: () => <WalletSection /> },
   { id: 'printer', label: 'Printer', icon: Printer, render: () => <PrinterSettings /> },
   { id: 'notifications', label: 'Notifications', icon: Bell, render: () => <NotificationSettings /> },
   { id: 'security', label: 'Security', icon: ShieldCheck, render: () => <Security /> },

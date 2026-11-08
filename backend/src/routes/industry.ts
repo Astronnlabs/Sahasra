@@ -1,4 +1,5 @@
 import { sellerSnapshot } from '../lib/seller.js';
+import { sendBillInBackground } from '../lib/ebill.js';
 import { Prisma } from '@prisma/client';
 import { Router, type Request } from 'express';
 import { z } from 'zod';
@@ -245,6 +246,7 @@ industryRouter.post('/restaurant/orders/:id/settle', requireTenant, guard(['rest
     return created;
   });
   await audit(req, 'created', 'Sales', sale.invoiceNo, `Restaurant bill ₹${num(sale.total)}`);
+  sendBillInBackground(tid(req), sale.id);
   res.json(saleOut(sale));
 });
 

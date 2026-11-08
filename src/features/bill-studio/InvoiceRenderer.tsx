@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { createContext, useContext, type CSSProperties, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useWorkspace } from '@/app/providers/WorkspaceProvider';
 import { Barcode, QrCode, upiLink } from '@/components/common/Codes';
 import { LogoMark } from '@/components/layout/Logo';
@@ -24,6 +24,34 @@ function Row({ label, value, strong, accent }: { label: string; value: string; s
   );
 }
 
+/**
+ * The business logo. With no logo (or one that fails to load) the bill shows the business
+ * name instead — unless the design already prints the name on its own line.
+ */
+function LogoBlock({ logo, name, nameElsewhere, sample, size, accent, style }: { logo?: string; name: string; nameElsewhere: boolean; sample: boolean; size: number; accent: string; style: CSSProperties }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [logo]);
+  const fallbackText = nameElsewhere ? '' : name;
+
+  if (logo && !failed) {
+    return (
+      <div style={style}>
+        <img
+          src={logo}
+          alt={name}
+          data-fallback-text={fallbackText}
+          onError={() => setFailed(true)}
+          style={{ height: size * 3.6, width: size * 3.6 }}
+          className="rounded-lg object-cover"
+        />
+      </div>
+    );
+  }
+  if (fallbackText) return <div style={{ ...style, fontSize: size * 1.6, fontWeight: 700, color: accent, lineHeight: 1.15 }}>{fallbackText}</div>;
+  // In the designer, keep a placeholder so the logo block can still be seen and selected.
+  return sample ? <div style={style}><LogoMark className="!h-auto" /></div> : null;
+}
+
 export function ElementView({ el, template }: { el: TemplateElement; template: InvoiceTemplate }) {
   const live = useWorkspace();
   const S = useContext(InvoiceDataContext);
@@ -45,9 +73,16 @@ export function ElementView({ el, template }: { el: TemplateElement; template: I
   switch (el.type) {
     case 'logo':
       return (
-        <div style={{ ...style, display: 'flex', justifyContent: justify }}>
-          {ws.logo ? <img src={ws.logo} alt="" style={{ height: p.fontSize * 3.6, width: p.fontSize * 3.6 }} className="rounded-lg object-cover" /> : <LogoMark className="!h-auto" />}
-        </div>
+        <LogoBlock
+          logo={ws.logo}
+          name={ws.businessName}
+          // The name only stands in for the logo when the design has no separate name line.
+          nameElsewhere={template.elements.some((e) => e.type === 'businessName')}
+          sample={!!S.sample}
+          size={p.fontSize}
+          accent={p.color ?? template.accent}
+          style={{ ...style, display: 'flex', justifyContent: justify }}
+        />
       );
     case 'businessName':
       return block(ws.businessName, { color: p.color ?? template.accent, letterSpacing: '-0.01em', lineHeight: 1.15 });

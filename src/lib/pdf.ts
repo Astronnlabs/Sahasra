@@ -16,6 +16,11 @@ export async function elementToPdf(el: HTMLElement, paper: PaperSize) {
   // Loaded only when a bill is downloaded or printed, so the rest of the app stays light.
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')]);
   await document.fonts?.ready;
+  // The logo and photos must finish loading first, or they are missing from the PDF.
+  await Promise.race([
+    Promise.all(Array.from(el.querySelectorAll('img')).map((img) => (img.complete ? null : img.decode().catch(() => null)))),
+    new Promise((r) => setTimeout(r, 5000)),
+  ]);
   const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false });
   const page = PAGE_MM[paper] ?? PAGE_MM.A4;
   const imageH = (canvas.height * page.w) / canvas.width;

@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: sahasra
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: >-
+      npm ci --include=dev && npm run build &&
+      cd backend && npm ci --include=dev && npx prisma generate && npm run build &&
+      npx prisma migrate deploy
+    startCommand: cd backend && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_ORIGIN
+        sync: false
+      - key: UPLOAD_DIR
+        value: ./uploads

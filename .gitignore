@@ -1,0 +1,12 @@
+node_modules
+dist
+*.local
+.env
+.vite
+*.tsbuildinfo
+
+backend/uploads/
+backend/uploads-test/
+
+# Built by print-helper (npm run build); too large for git
+public/downloads/

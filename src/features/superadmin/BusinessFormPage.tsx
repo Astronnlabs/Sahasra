@@ -307,7 +307,8 @@ export function BusinessFormPage() {
                             onChange={(e) => {
                               const dur = e.target.value;
                               form.setValue('planValidityDuration', dur);
-                              const fromDate = watch('planValidFrom') ? new Date(watch('planValidFrom')) : new Date();
+                              const validFrom = watch('planValidFrom');
+                              const fromDate = validFrom ? new Date(validFrom) : new Date();
                               const to = new Date(fromDate);
                               if (dur === '1month') to.setMonth(to.getMonth() + 1);
                               else if (dur === '3months') to.setMonth(to.getMonth() + 3);

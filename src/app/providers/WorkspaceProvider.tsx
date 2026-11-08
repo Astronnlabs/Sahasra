@@ -43,6 +43,9 @@ export interface WorkspaceProfile {
   logo?: string;
   status?: TenantStatus;
   plan?: Plan;
+  astronLabsService?: boolean;
+  planValidFrom?: string | null;
+  planValidTo?: string | null;
   access: string[] | null;
   settings: WorkspaceSettings;
 }

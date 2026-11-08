@@ -212,8 +212,8 @@ export function BusinessProfile() {
               <CreditCard className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-[14px] font-medium text-foreground">
-                  {PLAN_LABEL[ws.plan]} Plan
-                  {PLAN_PRICE[ws.plan] ? ` · ₹${PLAN_PRICE[ws.plan]}/month` : ' · Free'}
+                  {ws.plan ? PLAN_LABEL[ws.plan] : 'Free'} Plan
+                  {ws.plan && PLAN_PRICE[ws.plan] ? ` · ₹${PLAN_PRICE[ws.plan]}/month` : ' · Free'}
                 </p>
                 <p className="text-xs text-muted-foreground">Standard subscription</p>
               </div>

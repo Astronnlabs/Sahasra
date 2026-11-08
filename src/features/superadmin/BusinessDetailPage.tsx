@@ -187,7 +187,7 @@ export function BusinessDetailPage() {
                             tenant.planValidTo
                               ? `${tenant.planValidFrom ? formatDate(tenant.planValidFrom) + ' to ' : ''}${formatDate(tenant.planValidTo)} (${new Date(tenant.planValidTo) > new Date() ? 'Active' : 'Expired'})`
                               : 'Ongoing',
-                          ],
+                          ] as [string, string],
                         ]
                       : []),
                   ]}

@@ -247,8 +247,14 @@ export async function invoiceToEscPos(template: InvoiceTemplate, S: InvoiceData,
         break;
       case 'businessAddress':
         if (seller.address) w.text(seller.address, { align });
-        if (seller.phone || seller.email) w.text([seller.phone, seller.email].filter(Boolean).join(' · '), { align });
         break;
+      case 'phone':
+      case 'email': {
+        const value = (p.text ?? '').trim() || (el.type === 'phone' ? seller.phone : seller.email);
+        const label = p.label ?? (el.type === 'phone' ? 'Ph:' : 'Email:');
+        if (value) w.text(label ? `${label} ${value}` : value, { align });
+        break;
+      }
       case 'gstin':
         if (seller.gstin) w.text(`GSTIN: ${seller.gstin}`, { align, bold });
         break;

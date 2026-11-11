@@ -262,6 +262,25 @@ function ElementProperties({ type, props, onChange, onRemove, onDone }: { type: 
         </Field>
       )}
 
+      {(type === 'phone' || type === 'email') && (
+        <>
+          <Field label={type === 'phone' ? 'Phone number(s) to print' : 'Email to print'}>
+            <Input
+              value={props.text ?? ''}
+              placeholder={type === 'phone' ? 'Business phone from Settings' : 'Business email from Settings'}
+              inputMode={type === 'phone' ? 'tel' : 'email'}
+              onChange={(e) => onChange({ text: e.target.value.slice(0, 80) })}
+            />
+          </Field>
+          <Field label="Label">
+            <Input value={props.label ?? ''} placeholder={type === 'phone' ? 'Ph:' : 'Email:'} onChange={(e) => onChange({ label: e.target.value.slice(0, 20) })} />
+          </Field>
+          <p className="-mt-2 text-2xs text-muted-foreground">
+            Leave the {type === 'phone' ? 'number' : 'email'} empty to use the one in Settings → Business. For two numbers, write e.g. “98300 11223 / 033 2550 1122”.
+          </p>
+        </>
+      )}
+
       {type !== 'divider' && (
         <>
           <Field label="Alignment">

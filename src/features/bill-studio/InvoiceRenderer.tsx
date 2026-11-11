@@ -139,11 +139,22 @@ export function ElementView({ el, template }: { el: TemplateElement; template: I
     case 'businessName':
       return block(ws.businessName, { color: p.color ?? template.accent, letterSpacing: '-0.01em', lineHeight: 1.15 });
     case 'businessAddress':
+      // Address only — phone and email are their own elements.
+      if (!ws.address) return null;
+      return block(<span style={{ opacity: thermal ? 1 : 0.75, whiteSpace: 'pre-line', lineHeight: 1.4 }}>{ws.address}</span>);
+    case 'phone':
+    case 'email': {
+      // The number / email typed in Bill Studio, or the business's own from Settings.
+      const value = (p.text ?? '').trim() || (el.type === 'phone' ? ws.phone : ws.email);
+      if (!value) return null;
+      const label = p.label ?? (el.type === 'phone' ? 'Ph:' : 'Email:');
       return block(
-        <span style={{ opacity: thermal ? 1 : 0.75, whiteSpace: 'pre-line', lineHeight: 1.4 }}>
-          {[ws.address, [ws.phone, ws.email].filter(Boolean).join(' · ')].filter(Boolean).join('\n')}
+        <span style={{ opacity: thermal ? 1 : 0.85 }}>
+          {label && <span style={{ fontWeight: 600 }}>{label} </span>}
+          {value}
         </span>,
       );
+    }
     case 'gstin':
       // Unregistered businesses print no GSTIN line.
       if (!ws.gstin && !S.sample) return null;

@@ -9,7 +9,9 @@ import {
   Image,
   Landmark,
   ListOrdered,
+  Mail,
   MapPin,
+  Phone,
   Minus,
   PenLine,
   QrCode,
@@ -31,6 +33,8 @@ export type ElementType =
   | 'logo'
   | 'businessName'
   | 'businessAddress'
+  | 'phone'
+  | 'email'
   | 'gstin'
   | 'title'
   | 'invoiceMeta'
@@ -65,6 +69,8 @@ export interface ElementProps {
   marginTop: number;
   color?: string;
   text?: string;
+  /** Phone / email elements: the label printed before the value ("Ph:", "Call us:"…). */
+  label?: string;
   columns?: TableColumns;
   /** CGST+SGST vs IGST */
   taxMode?: 'intra' | 'inter';
@@ -104,6 +110,8 @@ export const ELEMENT_LIBRARY: { group: string; items: { type: ElementType; label
       { type: 'logo', label: 'Logo', icon: Image },
       { type: 'businessName', label: 'Business name', icon: Building2 },
       { type: 'businessAddress', label: 'Business address', icon: MapPin },
+      { type: 'phone', label: 'Phone number', icon: Phone },
+      { type: 'email', label: 'Email', icon: Mail },
       { type: 'gstin', label: 'GSTIN', icon: Landmark },
       { type: 'title', label: 'Invoice title', icon: Type },
       { type: 'invoiceMeta', label: 'Invoice no. & date', icon: CalendarDays },
@@ -205,7 +213,7 @@ export const PRESET_TEMPLATES: InvoiceTemplate[] = [
     watermark: '',
     isDefault: true,
     updatedAt: now,
-    elements: build('A4', ['logo', 'businessName', 'businessAddress', 'gstin', 'title', 'invoiceMeta', 'divider', 'customer', 'itemsTable', 'taxSummary', 'totals', 'amountInWords', 'paymentQr', 'bankDetails', 'terms', 'signature', 'footer']),
+    elements: build('A4', ['logo', 'businessName', 'businessAddress', 'phone', 'email', 'gstin', 'title', 'invoiceMeta', 'divider', 'customer', 'itemsTable', 'taxSummary', 'totals', 'amountInWords', 'paymentQr', 'bankDetails', 'terms', 'signature', 'footer']),
   },
   {
     id: 'tpl_modern',
@@ -216,7 +224,7 @@ export const PRESET_TEMPLATES: InvoiceTemplate[] = [
     watermark: '',
     isDefault: false,
     updatedAt: now,
-    elements: build('A4', ['title', 'businessName', 'businessAddress', 'gstin', 'invoiceMeta', 'customer', 'itemsTable', 'totals', 'amountInWords', 'bankDetails', 'footer'], {
+    elements: build('A4', ['title', 'businessName', 'businessAddress', 'phone', 'email', 'gstin', 'invoiceMeta', 'customer', 'itemsTable', 'totals', 'amountInWords', 'bankDetails', 'footer'], {
       title: { align: 'left', fontSize: 28, fontWeight: 700 },
       businessName: { fontSize: 16, marginTop: 16 },
     }),
@@ -230,7 +238,7 @@ export const PRESET_TEMPLATES: InvoiceTemplate[] = [
     watermark: '',
     isDefault: false,
     updatedAt: now,
-    elements: build('A5', ['logo', 'businessName', 'gstin', 'title', 'invoiceMeta', 'customer', 'itemsTable', 'taxSummary', 'totals', 'paymentQr', 'signature', 'footer'], {
+    elements: build('A5', ['logo', 'businessName', 'phone', 'gstin', 'title', 'invoiceMeta', 'customer', 'itemsTable', 'taxSummary', 'totals', 'paymentQr', 'signature', 'footer'], {
       businessName: { fontSize: 18 },
     }),
   },
@@ -243,7 +251,7 @@ export const PRESET_TEMPLATES: InvoiceTemplate[] = [
     watermark: '',
     isDefault: false,
     updatedAt: now,
-    elements: build('thermal80', ['logo', 'businessName', 'businessAddress', 'gstin', 'divider', 'title', 'invoiceMeta', 'customer', 'divider', 'itemsTable', 'totals', 'taxSummary', 'paymentQr', 'footer', 'barcode'], {
+    elements: build('thermal80', ['logo', 'businessName', 'businessAddress', 'phone', 'gstin', 'divider', 'title', 'invoiceMeta', 'customer', 'divider', 'itemsTable', 'totals', 'taxSummary', 'paymentQr', 'footer', 'barcode'], {
       logo: { fontSize: 16 },
     }),
   },
@@ -256,9 +264,10 @@ export const PRESET_TEMPLATES: InvoiceTemplate[] = [
     watermark: '',
     isDefault: false,
     updatedAt: now,
-    elements: build('thermal58', ['logo', 'businessName', 'businessAddress', 'gstin', 'divider', 'invoiceMeta', 'divider', 'itemsTable', 'totals', 'footer'], {
+    elements: build('thermal58', ['logo', 'businessName', 'businessAddress', 'phone', 'gstin', 'divider', 'invoiceMeta', 'divider', 'itemsTable', 'totals', 'footer'], {
       logo: { fontSize: 14 },
       businessAddress: { fontSize: 10 },
+      phone: { fontSize: 10, marginTop: 2 },
     }),
   },
 ];

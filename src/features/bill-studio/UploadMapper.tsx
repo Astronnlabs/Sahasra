@@ -14,7 +14,9 @@ import { PAPER, makeElement, type ElementType, type InvoiceTemplate, type PaperS
 const PARTS: { type: ElementType; label: string; hint: string }[] = [
   { type: 'logo', label: 'Logo', hint: 'Your brand mark at the top' },
   { type: 'businessName', label: 'Business name', hint: 'Large heading' },
-  { type: 'businessAddress', label: 'Address & contact', hint: 'Address, phone, email' },
+  { type: 'businessAddress', label: 'Address', hint: 'Shop address' },
+  { type: 'phone', label: 'Phone number', hint: 'Any number you choose' },
+  { type: 'email', label: 'Email', hint: 'Business email' },
   { type: 'gstin', label: 'GSTIN', hint: 'Your GST number' },
   { type: 'title', label: 'Title', hint: '“Tax Invoice”, “Bill of Supply”…' },
   { type: 'invoiceMeta', label: 'Invoice number & date', hint: 'Usually top right' },
@@ -30,7 +32,7 @@ const PARTS: { type: ElementType; label: string; hint: string }[] = [
   { type: 'footer', label: 'Footer note', hint: '“Thank you for your business”' },
 ];
 
-const DEFAULT_ON = new Set<ElementType>(['businessName', 'businessAddress', 'gstin', 'title', 'invoiceMeta', 'customer', 'itemsTable', 'taxSummary', 'totals', 'amountInWords', 'signature']);
+const DEFAULT_ON = new Set<ElementType>(['businessName', 'businessAddress', 'phone', 'gstin', 'title', 'invoiceMeta', 'customer', 'itemsTable', 'taxSummary', 'totals', 'amountInWords', 'signature']);
 
 /**
  * Recreate an existing bill layout: the uploaded file is shown as a reference

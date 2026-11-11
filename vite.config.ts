@@ -2,8 +2,8 @@ import path from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// SAHASRA_API lets a second copy of the app talk to the test API (defaults to the dev API on port 4000).
-const api = process.env.SAHASRA_API ?? 'http://localhost:4000';
+// SAHAASRA_API lets a second copy of the app talk to the test API (defaults to the dev API on port 4000).
+const api = process.env.SAHAASRA_API ?? 'http://localhost:4000';
 
 export default defineConfig({
   plugins: [react()],

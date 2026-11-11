@@ -1,6 +1,6 @@
 /**
  * Data import ("data retrieval"): reads a spreadsheet or SQL dump, finds the header row, works out what
- * each column holds — from its name and from the values in it — and turns rows into Sahasra records.
+ * each column holds — from its name and from the values in it — and turns rows into Sahaasra records.
  */
 
 import { parseSqlDump } from './sqlDump';
@@ -293,7 +293,7 @@ export interface TableNote {
   locked?: boolean;
 }
 const has = (s: Sheet, re: RegExp) => s.headers.some((h) => re.test(h));
-/** Explains tables Sahasra doesn't take, so every table in the file is accounted for. */
+/** Explains tables Sahaasra doesn't take, so every table in the file is accounted for. */
 export function tableNote(s: Sheet): TableNote | null {
   const n = s.name.toLowerCase();
   if (has(s, /^(password|passwd|pass|password_?hash|pin|secret|token|api_?key)$/i) || /credential|password|secret|token|session/.test(n)) {
@@ -302,7 +302,7 @@ export function tableNote(s: Sheet): TableNote | null {
   if (!s.rows.length) return { reason: 'Empty — no rows' };
   if (/^(users?|accounts?|logins?|admins?)$/.test(n)) return { reason: 'App logins — add staff logins in Users instead' };
   if (/permission|^roles?$|role_/.test(n)) return { reason: 'Access rules — set them in Roles & Permissions' };
-  if (/branch|outlet|store_?location|^locations?$/.test(n)) return { reason: 'Branches are set up by the Sahasra team' };
+  if (/branch|outlet|store_?location|^locations?$/.test(n)) return { reason: 'Branches are set up by the Sahaasra team' };
   if (/categor/.test(n) && s.headers.length <= 5) return { reason: 'Category names — they come in with products and services' };
   if (/^(migrations?|schema|settings?|config|logs?|audit|jobs?|cache|failed_jobs)$/.test(n)) return { reason: 'App settings and logs — not business records' };
   return null;
@@ -498,7 +498,7 @@ export function buildRecords(sheet: Sheet, target: ImportTarget, plan: ColumnPla
     const rec: Record<string, string | number | boolean | null> = {};
     for (const p of used) rec[p.field] = convert(r[p.index], fields.get(p.field)!.kind);
     if (target === 'products' || target === 'inhouse') {
-      // Each item needs its own code: a code already used by another item is dropped and Sahasra makes a new one.
+      // Each item needs its own code: a code already used by another item is dropped and Sahaasra makes a new one.
       const code = typeof rec.sku === 'string' ? rec.sku.toUpperCase() : '';
       const name = String(rec.name ?? '').trim().toLowerCase();
       if (code && codeOwner.has(code) && codeOwner.get(code) !== name) delete rec.sku;

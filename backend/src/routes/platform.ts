@@ -19,7 +19,7 @@ platformRouter.use('/platform', requireSuperAdmin);
 /** Platform actions are logged against the affected business so its owner can see them. */
 async function log(req: Request, tenantId: string | null, action: 'created' | 'edited' | 'deleted', module: string, target: string, details = '') {
   try {
-    await db.auditLog.create({ data: { tenantId, userId: req.auth!.user.id, user: `${req.auth!.user.name} (Sahasra Support)`, action, module, target: target.slice(0, 200), details: details.slice(0, 500), ip: req.ip ?? '' } });
+    await db.auditLog.create({ data: { tenantId, userId: req.auth!.user.id, user: `${req.auth!.user.name} (Sahaasra Support)`, action, module, target: target.slice(0, 200), details: details.slice(0, 500), ip: req.ip ?? '' } });
   } catch (e) {
     console.error('audit failed', e);
   }
@@ -195,7 +195,7 @@ platformRouter.post('/platform/tenants/:id/reset-owner-password', async (req, re
   const tempPassword = generatePassword();
   await db.user.update({ where: { id: owner.id }, data: { passwordHash: await hashPassword(tempPassword), status: owner.status === 'suspended' ? 'suspended' : 'invited' } });
   await db.session.deleteMany({ where: { userId: owner.id } });
-  await log(req, t.id, 'edited', 'Users', owner.name, 'Owner password reset by Sahasra support');
+  await log(req, t.id, 'edited', 'Users', owner.name, 'Owner password reset by Sahaasra support');
   res.json({ email: owner.email, phone: owner.phone ?? '', tempPassword });
 });
 
@@ -244,7 +244,7 @@ platformRouter.post('/platform/users', async (req, res) => {
   await assertLoginFree(b.email, b.phone);
   const tempPassword = generatePassword();
   const u = await db.user.create({ data: { tenantId: t.id, name: b.name, email: b.email, phone: b.phone, phoneKey: phoneKey(b.phone), role: b.role, status: 'invited', passwordHash: await hashPassword(tempPassword) }, include: { tenant: { select: { name: true } } } });
-  await log(req, t.id, 'created', 'Users', u.name, `Added as ${u.role} by Sahasra support`);
+  await log(req, t.id, 'created', 'Users', u.name, `Added as ${u.role} by Sahaasra support`);
   res.status(201).json({ ...platformUserOut(u), tempPassword });
 });
 
@@ -254,7 +254,7 @@ platformRouter.put('/platform/users/:id', async (req, res) => {
   if (!u || u.role === 'Super Admin') throw notFound('User');
   const updated = await db.user.update({ where: { id: u.id }, data: { status: b.status }, include: { tenant: { select: { name: true } } } });
   if (b.status === 'suspended') await db.session.deleteMany({ where: { userId: u.id } });
-  await log(req, u.tenantId, 'edited', 'Users', u.name, b.status === 'suspended' ? 'Suspended by Sahasra support' : 'Reactivated by Sahasra support');
+  await log(req, u.tenantId, 'edited', 'Users', u.name, b.status === 'suspended' ? 'Suspended by Sahaasra support' : 'Reactivated by Sahaasra support');
   res.json(platformUserOut(updated));
 });
 
@@ -263,7 +263,7 @@ platformRouter.delete('/platform/users/:id', async (req, res) => {
   if (!u || u.role === 'Super Admin') throw notFound('User');
   if (u.role === 'Owner') throw badRequest('The owner login is deleted together with the business. Reset the password or suspend it instead.');
   await db.$transaction([db.heldBill.deleteMany({ where: { userId: u.id } }), db.user.delete({ where: { id: u.id } })]);
-  await log(req, u.tenantId, 'deleted', 'Users', u.name, 'Login deleted by Sahasra support');
+  await log(req, u.tenantId, 'deleted', 'Users', u.name, 'Login deleted by Sahaasra support');
   res.json({ id: u.id });
 });
 
@@ -273,7 +273,7 @@ platformRouter.post('/platform/users/:id/reset-password', async (req, res) => {
   const tempPassword = generatePassword();
   await db.user.update({ where: { id: u.id }, data: { passwordHash: await hashPassword(tempPassword) } });
   await db.session.deleteMany({ where: { userId: u.id } });
-  await log(req, u.tenantId, 'edited', 'Users', u.name, 'Password reset by Sahasra support');
+  await log(req, u.tenantId, 'edited', 'Users', u.name, 'Password reset by Sahaasra support');
   res.json({ tempPassword });
 });
 
@@ -328,12 +328,12 @@ platformRouter.post('/platform/tickets/:id/reply', async (req, res) => {
       status: b.status ?? (b.from === 'agent' ? 'pending' : t.status),
       assignee: t.assignee ?? req.auth!.user.name,
       updatedAt: now,
-      messages: { create: { from: b.from, author: b.from === 'agent' ? 'Sahasra Support' : req.auth!.user.name, text: b.text, at: now } },
+      messages: { create: { from: b.from, author: b.from === 'agent' ? 'Sahaasra Support' : req.auth!.user.name, text: b.text, at: now } },
     },
     include: ticketInclude,
   });
   if (b.from === 'agent') {
-    await db.notification.create({ data: { tenantId: t.tenantId, kind: 'system', title: 'Sahasra support replied', message: `Reply on ${ticketOut(updated).number}: ${t.subject}`.slice(0, 200), href: '/support' } });
+    await db.notification.create({ data: { tenantId: t.tenantId, kind: 'system', title: 'Sahaasra support replied', message: `Reply on ${ticketOut(updated).number}: ${t.subject}`.slice(0, 200), href: '/support' } });
   }
   res.json(ticketOut(updated));
 });

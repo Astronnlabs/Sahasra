@@ -9,7 +9,7 @@ import { PrinterSettings } from './PrinterSettings';
 import { ReferSection } from './ReferSection';
 import { Appearance, Backup, BusinessProfile, InvoiceSettings, NotificationSettings, PaymentMethods, PosSettings, Security } from './SettingsSections';
 
-/** `support`: set up by the Sahasra team (shown only in support mode), not by the business. */
+/** `support`: set up by the Sahaasra team (shown only in support mode), not by the business. */
 const SECTIONS: { id: string; label: string; icon: LucideIcon; render: () => ReactNode; support?: boolean }[] = [
   { id: 'profile', label: 'Business Profile', icon: Store, render: () => <BusinessProfile /> },
   { id: 'invoice', label: 'Invoice Settings', icon: FileText, render: () => <InvoiceSettings /> },

@@ -56,7 +56,7 @@ export const platformAdminsService = {
   setStatus: (id: string, status: 'active' | 'suspended') => api.put<PlatformAdmin>(`/platform/admins/${id}`, { status }),
 };
 
-/** Support inbox for the Sahasra team. */
+/** Support inbox for the Sahaasra team. */
 export const platformTicketsService = {
   list: () => api.get<SupportTicket[]>('/platform/tickets'),
   byTenant: (tenantId: string) => api.get<SupportTicket[]>('/platform/tickets', { tenantId }),

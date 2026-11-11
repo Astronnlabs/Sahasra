@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 export type Theme = 'light' | 'dark';
 
-const THEME_KEY = 'sahasra.theme';
+const THEME_KEY = 'sahaasra.theme';
 
 function readRawTheme() {
   try {

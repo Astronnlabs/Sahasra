@@ -1,5 +1,6 @@
 services:
   - type: web
+    # Service name kept as created on Render (renaming it here would create a second service).
     name: sahasra
     runtime: node
     plan: free
@@ -36,8 +37,12 @@ services:
 
   # Public website (website/ folder): features, pricing, login and sign-up buttons.
   - type: web
-    name: sahasra-website
+    name: sahaasra-website
     runtime: static
     rootDir: website
-    buildCommand: ""
-    staticPublishPath: .
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

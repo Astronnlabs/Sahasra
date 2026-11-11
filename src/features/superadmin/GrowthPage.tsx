@@ -72,7 +72,7 @@ export function GrowthPage() {
   const label = RANGES.find((r) => r.value === range)!.label;
 
   const exportCsv = () => {
-    downloadTextFile(`sahasra-new-businesses-${range}.csv`, toCsv(m.newT.map((t) => ({ Business: t.name, Industry: BUSINESS_TYPE_MAP[t.type]?.label ?? t.type, City: t.city, Owner: t.ownerName, Email: t.ownerEmail, Plan: PLAN_LABEL[t.plan], Status: t.status, Joined: formatDate(t.createdAt) }))), 'text/csv');
+    downloadTextFile(`sahaasra-new-businesses-${range}.csv`, toCsv(m.newT.map((t) => ({ Business: t.name, Industry: BUSINESS_TYPE_MAP[t.type]?.label ?? t.type, City: t.city, Owner: t.ownerName, Email: t.ownerEmail, Plan: PLAN_LABEL[t.plan], Status: t.status, Joined: formatDate(t.createdAt) }))), 'text/csv');
     toast.success(`${m.newT.length} new businesses exported`);
   };
 
@@ -80,7 +80,7 @@ export function GrowthPage() {
     <>
       <PageHeader
         title="Growth & sign-ups"
-        description="How many new businesses and users joined Sahasra."
+        description="How many new businesses and users joined Sahaasra."
         actions={
           <>
             <div className="flex rounded-lg border border-border bg-surface p-0.5" role="tablist" aria-label="Period">

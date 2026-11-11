@@ -83,7 +83,7 @@ export function ReportsPage() {
       return;
     }
     // CSV opens directly in Excel and Google Sheets.
-    downloadTextFile(`sahasra-${category}-report-${range}.csv`, toCsv(data.table.rows), 'text/csv');
+    downloadTextFile(`sahaasra-${category}-report-${range}.csv`, toCsv(data.table.rows), 'text/csv');
     toast.success(`${meta.label} report downloaded`, { description: kind === 'excel' ? 'CSV file — opens in Excel.' : undefined });
   };
 

@@ -1,4 +1,4 @@
-/** Error returned by the SAHASRA API, with the HTTP status for callers that branch on it. */
+/** Error returned by the SAHAASRA API, with the HTTP status for callers that branch on it. */
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -11,9 +11,9 @@ export class ApiError extends Error {
 }
 
 /** Fired when the server says the session is gone, so the app can return to sign-in. */
-export const SESSION_EXPIRED_EVENT = 'sahasra:session-expired';
+export const SESSION_EXPIRED_EVENT = 'sahaasra:session-expired';
 /** Fired when the server says the business's plan must be bought or renewed. */
-export const PLAN_REQUIRED_EVENT = 'sahasra:plan-required';
+export const PLAN_REQUIRED_EVENT = 'sahaasra:plan-required';
 
 type Query = Record<string, string | number | boolean | undefined | null>;
 
@@ -36,13 +36,13 @@ async function request<T>(method: string, path: string, body?: unknown, query?: 
       credentials: 'same-origin',
       headers: {
         // Mutations must carry this header (server-side CSRF protection).
-        'x-sahasra-client': 'web',
+        'x-sahaasra-client': 'web',
         ...(body !== undefined && !isForm ? { 'content-type': 'application/json' } : {}),
       },
       body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
     });
   } catch {
-    throw new ApiError(0, 'Cannot reach the SAHASRA server. Check your connection and try again.');
+    throw new ApiError(0, 'Cannot reach the SAHAASRA server. Check your connection and try again.');
   }
   const data = res.status === 204 ? null : await res.json().catch(() => null);
   if (!res.ok) {

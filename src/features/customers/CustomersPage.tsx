@@ -88,7 +88,7 @@ export function CustomersPage() {
               variant="secondary"
               disabled={!data?.length}
               onClick={() => {
-                downloadTextFile('sahasra-customers.csv', toCsv((data ?? []).map((c) => ({ Name: c.name, Phone: c.phone, City: c.city, Orders: c.orders, 'Total Spend': c.totalSpend, Outstanding: c.outstanding }))), 'text/csv');
+                downloadTextFile('sahaasra-customers.csv', toCsv((data ?? []).map((c) => ({ Name: c.name, Phone: c.phone, City: c.city, Orders: c.orders, 'Total Spend': c.totalSpend, Outstanding: c.outstanding }))), 'text/csv');
                 toast.success('Customers exported');
               }}
             >

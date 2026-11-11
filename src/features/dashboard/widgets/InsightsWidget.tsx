@@ -21,7 +21,7 @@ export function InsightsWidget() {
   return (
     <WidgetCard title="Smart Business Insights" description="Generated from your activity" icon={<Sparkles />}>
       {data && data.length === 0 ? (
-        <EmptyState compact icon={Sparkles} title="No insights yet" description="As you bill, stock up and collect payments, Sahasra will point out what needs attention." />
+        <EmptyState compact icon={Sparkles} title="No insights yet" description="As you bill, stock up and collect payments, Sahaasra will point out what needs attention." />
       ) : (
       <div className="grid gap-3 sm:grid-cols-2">
         {isLoading || !data

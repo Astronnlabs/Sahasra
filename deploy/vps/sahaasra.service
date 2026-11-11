@@ -1,13 +1,13 @@
 [Unit]
-Description=SAHASRA billing software
+Description=SAHAASRA billing software
 After=network-online.target postgresql.service
 Wants=network-online.target
 
 [Service]
-User=sahasra
-Group=sahasra
-WorkingDirectory=/srv/sahasra/app/backend
-EnvironmentFile=/srv/sahasra/shared/.env
+User=sahaasra
+Group=sahaasra
+WorkingDirectory=/srv/sahaasra/app/backend
+EnvironmentFile=/srv/sahaasra/shared/.env
 ExecStart=/usr/bin/node dist/index.js
 Restart=always
 RestartSec=3
@@ -16,7 +16,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/srv/sahasra/shared/uploads
+ReadWritePaths=/srv/sahaasra/shared/uploads
 
 [Install]
 WantedBy=multi-user.target

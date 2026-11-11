@@ -60,7 +60,7 @@ export function SupportPage() {
     <>
       <PageHeader
         title="Help & Support"
-        description="Talk to the Sahasra team. Replies appear here and in your notifications."
+        description="Talk to the Sahaasra team. Replies appear here and in your notifications."
         actions={<Button onClick={() => setOpen(true)}><MessageSquarePlus /> New ticket</Button>}
       />
 
@@ -68,7 +68,7 @@ export function SupportPage() {
         <Skeleton className="h-[480px] rounded-2xl" />
       ) : tickets.length === 0 ? (
         <Card>
-          <EmptyState icon={LifeBuoy} title="No support tickets yet." description="Stuck on something? Raise a ticket and the Sahasra team will help you." actionLabel="New ticket" onAction={() => setOpen(true)} />
+          <EmptyState icon={LifeBuoy} title="No support tickets yet." description="Stuck on something? Raise a ticket and the Sahaasra team will help you." actionLabel="New ticket" onAction={() => setOpen(true)} />
         </Card>
       ) : (
         <Card className="grid min-h-[520px] overflow-hidden lg:grid-cols-[340px_1fr]">
@@ -86,7 +86,7 @@ export function SupportPage() {
                     <p className="mt-1 truncate text-[13px] font-semibold">{t.subject}</p>
                     <p className="mt-0.5 flex items-center gap-1.5 text-2xs text-muted-foreground">
                       {awaiting && <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-label="New reply" />}
-                      {awaiting ? 'Sahasra replied' : 'Updated'} {timeAgo(t.updatedAt)}
+                      {awaiting ? 'Sahaasra replied' : 'Updated'} {timeAgo(t.updatedAt)}
                     </p>
                   </button>
                 </li>

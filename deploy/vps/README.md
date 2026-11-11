@@ -1,4 +1,4 @@
-# SAHASRA on our own server (BigRock VPS, Ubuntu 22.04, 66.116.247.152)
+# SAHAASRA on our own server (BigRock VPS, Ubuntu 22.04, 66.116.247.152)
 
 | Address | What |
 |---|---|
@@ -8,15 +8,15 @@
 ## Layout
 
 ```
-/srv/sahasra/app             code (git checkout of this repository)
-/srv/sahasra/shared/.env     settings and secrets (never in git)
-/srv/sahasra/shared/uploads  uploaded logos and receipts
-/srv/sahasra/backups         nightly database backups, 02:30, 14 days kept
-/etc/systemd/system/sahasra.service
+/srv/sahaasra/app             code (git checkout of this repository)
+/srv/sahaasra/shared/.env     settings and secrets (never in git)
+/srv/sahaasra/shared/uploads  uploaded logos and receipts
+/srv/sahaasra/backups         nightly database backups, 02:30, 14 days kept
+/etc/systemd/system/sahaasra.service
 /etc/nginx/sites-available/sahaasra.in.conf, app.sahaasra.in.conf
 ```
 
-The app runs as the `sahasra` user on 127.0.0.1:4000 behind nginx. PostgreSQL 17 runs on the same server and
+The app runs as the `sahaasra` user on 127.0.0.1:4000 behind nginx. PostgreSQL 17 runs on the same server and
 is not reachable from outside. The firewall allows only ssh, http and https.
 VAAHAK will go beside it the same way: `/srv/vaahak`, user `vaahak`, its own database, port 4100, its own nginx file.
 
@@ -24,17 +24,21 @@ VAAHAK will go beside it the same way: `/srv/vaahak`, user `vaahak`, its own dat
 
 | Task | Command |
 |---|---|
-| Update to the latest code on GitHub | `bash /srv/sahasra/app/deploy/vps/deploy.sh` |
-| Change settings | `nano /srv/sahasra/shared/.env` then `systemctl restart sahasra` |
-| Is it running? | `systemctl status sahasra` |
-| Logs | `journalctl -u sahasra -f` |
-| Back up now | `sudo -u postgres sahasra-backup` |
-| Restore a backup | `systemctl stop sahasra; sudo -u postgres pg_restore --clean --if-exists -d sahasra /srv/sahasra/backups/<file>.dump; systemctl start sahasra` |
+| Update to the latest code on GitHub | `bash /srv/sahaasra/app/deploy/vps/deploy.sh` |
+| Change settings | `nano /srv/sahaasra/shared/.env` then `systemctl restart sahaasra` |
+| Is it running? | `systemctl status sahaasra` |
+| Logs | `journalctl -u sahaasra -f` |
+| Back up now | `sudo -u postgres sahaasra-backup` |
+| Restore a backup | `systemctl stop sahaasra; sudo -u postgres pg_restore --clean --if-exists -d sahaasra /srv/sahaasra/backups/<file>.dump; systemctl start sahaasra` |
 
 ## First install
 
 1. Point the domain's A records (`@`, `www`, `app`) to the server.
-2. `bash deploy/vps/setup.sh` (installs Node 20, PostgreSQL 17, nginx, certbot and the firewall, then creates the folders, database and settings file).
-3. Fill in `/srv/sahasra/shared/.env` (TOKEN_ENCRYPTION_KEY, PAYU_KEY, PAYU_SALT, and OLD_DATABASE_URL to move data).
-4. `bash deploy/vps/move-data.sh` to copy the data across, then `bash deploy/vps/deploy.sh`.
-5. `certbot --nginx -d sahaasra.in -d www.sahaasra.in -d app.sahaasra.in -m astronnlabs@gmail.com --agree-tos -n --redirect`
+2. `bash deploy/vps/setup.sh` (installs Node 20, PostgreSQL 17, nginx, certbot and the firewall, then creates the
+   folders, an empty database and the settings file with a new TOKEN_ENCRYPTION_KEY).
+3. `bash /srv/sahaasra/app/deploy/vps/deploy.sh` (builds the software and the website, creates the tables, starts the app).
+4. `certbot --nginx -d sahaasra.in -d www.sahaasra.in -d app.sahaasra.in -m astronnlabs@gmail.com --agree-tos -n --redirect`
+5. Open https://app.sahaasra.in and create the platform owner (Super Admin) account on the first-run screen.
+6. Later: add PAYU_KEY and PAYU_SALT to `/srv/sahaasra/shared/.env` and run `systemctl restart sahaasra`.
+
+The database here is separate from the Render/Supabase one, which stays for testing.

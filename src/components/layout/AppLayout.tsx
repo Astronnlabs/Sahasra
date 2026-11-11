@@ -65,7 +65,7 @@ export function AppLayout() {
       <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
       {!fullBleed && <AssistantWidget />}
 
-      <Modal open={shortcutsOpen} onOpenChange={setShortcutsOpen} title="Keyboard shortcuts" description="Work faster across Sahasra." size="sm">
+      <Modal open={shortcutsOpen} onOpenChange={setShortcutsOpen} title="Keyboard shortcuts" description="Work faster across Sahaasra." size="sm">
         <ul className="divide-y divide-border pb-2">
           {SHORTCUTS.map(([key, label]) => (
             <li key={key} className="flex items-center justify-between py-2.5 text-[13px]">

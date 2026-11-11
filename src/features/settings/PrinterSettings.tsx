@@ -12,7 +12,7 @@ import {
   PRINTER_STATE_LABEL,
   printerLevel,
   printerMessage,
-  SAHASRA_PRINTER_DOWNLOAD,
+  SAHAASRA_PRINTER_DOWNLOAD,
   savePrinterSettings,
   usePrinterStatus,
   type JobPrinter,
@@ -40,7 +40,7 @@ const testSale = (): Sale => ({
   paid: 105,
   payment: 'cash',
   status: 'paid',
-  cashier: 'Sahasra',
+  cashier: 'Sahaasra',
 });
 const testKot = (): Kot => ({ id: 'test', number: 'KOT-TEST', orderId: 'test', table: 'Table 1', type: 'dine-in', items: [{ name: 'Test dish', qty: 2, note: 'Less spicy' }, { name: 'Soft drink', qty: 1 }], createdAt: new Date().toISOString(), status: 'new' });
 
@@ -169,7 +169,7 @@ export function PrinterSettings() {
               To see this computer’s printers and print without the print window, install <b className="text-foreground">Sahasra Printer</b> once on this computer, then press Refresh.
             </p>
             <Button asChild>
-              <a href={SAHASRA_PRINTER_DOWNLOAD} download="SahasraPrinter.exe"><Download /> Download Sahasra Printer</a>
+              <a href={SAHAASRA_PRINTER_DOWNLOAD} download="SahasraPrinter.exe"><Download /> Download Sahasra Printer</a>
             </Button>
           </div>
         )}

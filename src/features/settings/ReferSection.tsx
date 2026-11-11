@@ -30,7 +30,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 const EMPTY: Values = { businessName: '', contactName: '', phone: '', city: '', businessType: '', notes: '' };
 
-/** Settings → Refer & Earn: refer another business; the Sahasra team follows up and rewards the referrer. */
+/** Settings → Refer & Earn: refer another business; the Sahaasra team follows up and rewards the referrer. */
 export function ReferSection() {
   const { businessName } = useWorkspace();
   const list = useQuery({ queryKey: REFERRALS_KEY, queryFn: referralsService.list });
@@ -50,7 +50,7 @@ export function ReferSection() {
   const rewards = (list.data ?? []).filter((r) => r.status === 'joined' || r.status === 'rewarded').length;
   const invite = () => {
     const { phone, contactName } = getValues();
-    openWhatsApp(phone || undefined, `Hi${contactName ? ` ${contactName}` : ''}, we use Sahasra for billing, stock and GST at ${businessName} and it works really well. You should try it — I’ve asked the Sahasra team to call you.`);
+    openWhatsApp(phone || undefined, `Hi${contactName ? ` ${contactName}` : ''}, we use Sahaasra for billing, stock and GST at ${businessName} and it works really well. You should try it — I’ve asked the Sahaasra team to call you.`);
   };
 
   return (
@@ -59,7 +59,7 @@ export function ReferSection() {
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15"><Gift className="h-6 w-6" /></span>
         <div className="flex-1">
           <h2 className="text-lg font-semibold">Refer a business, get {REFERRAL_REWARD}</h2>
-          <p className="mt-0.5 text-[13px] text-white/80">Know a shop, restaurant or salon that needs better billing? Send their details. When they join Sahasra, you get {REFERRAL_REWARD} on your plan — for every business that joins.</p>
+          <p className="mt-0.5 text-[13px] text-white/80">Know a shop, restaurant or salon that needs better billing? Send their details. When they join Sahaasra, you get {REFERRAL_REWARD} on your plan — for every business that joins.</p>
         </div>
         <div className="rounded-xl bg-white/15 px-4 py-2 text-center">
           <p className="text-2xl font-bold">{rewards}</p>
@@ -69,7 +69,7 @@ export function ReferSection() {
 
       <Section
         title="Refer a business"
-        description="The Sahasra team will call them and set everything up."
+        description="The Sahaasra team will call them and set everything up."
         footer={
           <>
             <Button variant="secondary" onClick={invite}>Invite on WhatsApp</Button>
@@ -88,7 +88,7 @@ export function ReferSection() {
               {BUSINESS_TYPES.map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
             </NativeSelect>
           </FormField>
-          <FormField label="Note for Sahasra team" error={errors.notes?.message}><Textarea {...register('notes')} rows={2} className="min-h-[38px]" placeholder="Best time to call, what they need…" /></FormField>
+          <FormField label="Note for Sahaasra team" error={errors.notes?.message}><Textarea {...register('notes')} rows={2} className="min-h-[38px]" placeholder="Best time to call, what they need…" /></FormField>
         </form>
       </Section>
 

@@ -110,7 +110,7 @@ export function UsersPage() {
     <>
       <PageHeader
         title="Users"
-        description="People who can sign in to your Sahasra workspace."
+        description="People who can sign in to your Sahaasra workspace."
         actions={
           <>
             <Button variant="secondary" asChild><Link to="/roles"><ShieldCheck /> Roles & permissions</Link></Button>

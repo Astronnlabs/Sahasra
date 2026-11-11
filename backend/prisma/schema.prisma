@@ -1,4 +1,4 @@
-// SAHASRA database schema (PostgreSQL).
+// SAHAASRA database schema (PostgreSQL).
 // Every business-owned row carries tenantId; the API scopes all queries by it.
 
 generator client {
@@ -107,7 +107,7 @@ model Tenant {
   @@index([createdAt])
 }
 
-/// A business this tenant referred to Sahasra. The Sahasra team follows up and grants the reward.
+/// A business this tenant referred to Sahaasra. The Sahaasra team follows up and grants the reward.
 model Referral {
   id           String   @id @default(cuid())
   tenantId     String

@@ -1,6 +1,6 @@
 import { workspaceService } from '@/services';
 
-/** The tables in a Sahasra export, in the order they appear in the workbook. */
+/** The tables in a Sahaasra export, in the order they appear in the workbook. */
 export const EXPORT_DATASETS = [
   { key: 'products', label: 'Products' },
   { key: 'services', label: 'Services' },
@@ -20,7 +20,7 @@ export const EXPORT_DATASETS = [
 export type DatasetKey = (typeof EXPORT_DATASETS)[number]['key'];
 
 type Row = Record<string, unknown>;
-/** Internal columns that mean nothing outside Sahasra. */
+/** Internal columns that mean nothing outside Sahaasra. */
 const HIDDEN = new Set(['tenantId', 'passwordHash', 'phoneKey']);
 
 /** "sellingPrice" → "Selling Price": readable headers that also import back cleanly. */
@@ -70,7 +70,7 @@ export async function downloadExcel() {
     const ws = rows.length ? XLSX.utils.json_to_sheet(rows) : XLSX.utils.aoa_to_sheet([['No records yet']]);
     XLSX.utils.book_append_sheet(wb, ws, d.label.slice(0, 31));
   }
-  XLSX.writeFile(wb, `sahasra-data-${stamp()}.xlsx`, { compression: true });
+  XLSX.writeFile(wb, `sahaasra-data-${stamp()}.xlsx`, { compression: true });
 }
 
 /** One dataset as CSV (UTF-8 with BOM so Excel shows ₹ and Indian names correctly). */
@@ -82,7 +82,7 @@ export async function downloadCsv(key: DatasetKey) {
   const url = URL.createObjectURL(new Blob(['﻿', csv], { type: 'text/csv;charset=utf-8' }));
   const a = document.createElement('a');
   a.href = url;
-  a.download = `sahasra-${label}-${stamp()}.csv`;
+  a.download = `sahaasra-${label}-${stamp()}.csv`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   return rows.length;

@@ -22,7 +22,7 @@ export function FullScreenLoader() {
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-3">
         <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-primary-light border-t-primary" />
-        <span className="text-xs font-medium tracking-[0.2em] text-subtle">SAHASRA</span>
+        <span className="text-xs font-medium tracking-[0.2em] text-subtle">SAHAASRA</span>
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 {
-  "name": "sahasra-backend",
+  "name": "sahaasra-backend",
   "private": true,
   "version": "1.0.0",
-  "description": "SAHASRA API server — business data, auth and platform administration",
+  "description": "SAHAASRA API server — business data, auth and platform administration",
   "type": "module",
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/index.ts",

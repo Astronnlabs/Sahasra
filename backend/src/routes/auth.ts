@@ -56,7 +56,7 @@ authRouter.post('/login', limiter, async (req, res) => {
   const ok = await verifyPassword(body.password, user?.passwordHash ?? DUMMY_HASH);
   if (!user || !ok) throw unauthorized('Incorrect email/mobile or password.');
   if (user.status === 'suspended') throw forbidden('Your access has been suspended. Please contact your business owner.');
-  if (user.tenant && (user.tenant.status === 'suspended' || user.tenant.status === 'churned')) throw forbidden(`${user.tenant.name} is suspended. Please contact Sahasra support.`);
+  if (user.tenant && (user.tenant.status === 'suspended' || user.tenant.status === 'churned')) throw forbidden(`${user.tenant.name} is suspended. Please contact Sahaasra support.`);
   const now = new Date();
   await db.user.update({ where: { id: user.id }, data: { lastLoginAt: now, status: 'active' } });
   if (user.tenantId) await db.tenant.update({ where: { id: user.tenantId }, data: { lastActiveAt: now } });
@@ -99,7 +99,7 @@ authRouter.post('/signup', signupLimiter, async (req, res) => {
   res.status(201).json({ ok: true });
 });
 
-// Businesses can also be created by the Sahasra Super Admin — see /platform/tenants.
+// Businesses can also be created by the Sahaasra Super Admin — see /platform/tenants.
 
 authRouter.post('/logout', async (req, res) => {
   await destroySession(req, res);

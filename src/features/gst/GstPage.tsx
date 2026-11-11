@@ -40,13 +40,13 @@ interface FilingData {
   itc: number;
 }
 
-/** Exports real data for filing on the GST portal or sharing with a CA. Nothing is submitted from Sahasra. */
+/** Exports real data for filing on the GST portal or sharing with a CA. Nothing is submitted from Sahaasra. */
 function FilingPrep({ data, onExport }: { data: FilingData | null; onExport: (kind: 'sales' | 'purchases' | 'hsn') => void }) {
   const exportSummary = () => {
     if (!data) return;
     downloadTextFile(
-      `sahasra-gst-summary-${data.period.replace(/\s+/g, '-').toLowerCase()}.json`,
-      JSON.stringify({ ...data, generatedAt: new Date().toISOString(), note: 'Prepared from your Sahasra books. This is not a filed return.' }, null, 2),
+      `sahaasra-gst-summary-${data.period.replace(/\s+/g, '-').toLowerCase()}.json`,
+      JSON.stringify({ ...data, generatedAt: new Date().toISOString(), note: 'Prepared from your Sahaasra books. This is not a filed return.' }, null, 2),
       'application/json',
     );
   };
@@ -81,11 +81,11 @@ export function GstPage() {
   const s = summary.data;
 
   const exportRegister = (rows: GstInvoiceRow[] | undefined, name: string) => {
-    downloadTextFile(`sahasra-${name}.csv`, toCsv((rows ?? []).map((r) => ({ Invoice: r.number, Party: r.party, GSTIN: r.gstin, Date: formatDate(r.date), Taxable: r.taxable, CGST: r.cgst, SGST: r.sgst, IGST: r.igst, Total: r.total }))), 'text/csv');
+    downloadTextFile(`sahaasra-${name}.csv`, toCsv((rows ?? []).map((r) => ({ Invoice: r.number, Party: r.party, GSTIN: r.gstin, Date: formatDate(r.date), Taxable: r.taxable, CGST: r.cgst, SGST: r.sgst, IGST: r.igst, Total: r.total }))), 'text/csv');
     toast.success(`${name.replace('-', ' ')} exported`);
   };
   const exportHsn = () => {
-    downloadTextFile('sahasra-hsn-summary.csv', toCsv((hsn.data ?? []).map((r) => ({ HSN: r.hsn, Description: r.description, Quantity: r.qty, 'GST rate': r.rate, Taxable: r.taxable, Tax: r.tax }))), 'text/csv');
+    downloadTextFile('sahaasra-hsn-summary.csv', toCsv((hsn.data ?? []).map((r) => ({ HSN: r.hsn, Description: r.description, Quantity: r.qty, 'GST rate': r.rate, Taxable: r.taxable, Tax: r.tax }))), 'text/csv');
     toast.success('HSN summary exported');
   };
   const { gstin, businessName } = useWorkspace();

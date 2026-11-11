@@ -31,7 +31,7 @@ export const config = {
   ...parsed.data,
   isProd: parsed.data.NODE_ENV === 'production',
   uploadDir: path.resolve(parsed.data.UPLOAD_DIR),
-  sessionCookie: 'sahasra_sid',
+  sessionCookie: 'sahaasra_sid',
   /** Session lifetime when "Remember me" is ticked. */
   rememberMs: 30 * 24 * 3600 * 1000,
   /** Session lifetime otherwise (browser-session cookie, server-side expiry). */

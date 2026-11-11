@@ -226,7 +226,7 @@ importer('sales', ['sales', 'pos'], 'create', 'Sales', async (req, ctx) => {
   return async (row) => {
     const r = billRow.parse(row);
     const no = r.invoiceNo.trim();
-    if (taken.has(no.toLowerCase())) return { action: 'skip', message: 'This bill is already in Sahasra' };
+    if (taken.has(no.toLowerCase())) return { action: 'skip', message: 'This bill is already in Sahaasra' };
     const date = dayOf(r.date);
     if (date.getTime() > Date.now() + 864e5) throw new Error('Bill date is in the future.');
 

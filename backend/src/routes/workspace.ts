@@ -37,8 +37,8 @@ workspaceRouter.put('/workspace/profile', requireTenant, guard('settings', 'edit
     })
     .parse(req.body);
   const current = await db.tenant.findUniqueOrThrow({ where: { id: tid(req) }, select: { type: true } });
-  // The business type is set by Sahasra; only a Super Admin (support mode) may change it.
-  if (b.businessType && b.businessType !== current.type && !req.auth!.isSuperAdmin) throw forbidden('Your business type is managed by Sahasra. Ask from Help & Support to change it.');
+  // The business type is set by Sahaasra; only a Super Admin (support mode) may change it.
+  if (b.businessType && b.businessType !== current.type && !req.auth!.isSuperAdmin) throw forbidden('Your business type is managed by Sahaasra. Ask from Help & Support to change it.');
   const t = await db.tenant.update({
     where: { id: tid(req) },
     data: {
@@ -137,6 +137,6 @@ workspaceRouter.get('/export', requireTenant, guard('settings', 'export'), async
     db.stockMovement.findMany({ where }),
   ]);
   await audit(req, 'exported', 'Settings', 'Full data export');
-  res.setHeader('Content-Disposition', `attachment; filename="sahasra-export-${new Date().toISOString().slice(0, 10)}.json"`);
+  res.setHeader('Content-Disposition', `attachment; filename="sahaasra-export-${new Date().toISOString().slice(0, 10)}.json"`);
   res.json(plain({ exportedAt: new Date(), business: workspaceOut(tenant), products, services, customers, vendors, sales, purchases, payments, expenses, employees, attendance, advances, stockMovements }));
 });

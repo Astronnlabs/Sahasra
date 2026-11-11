@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTheme } from '@/app/providers/ThemeProvider';
 
-/** Sahasra purple family first; semantic colours only where meaning requires. */
+/** Sahaasra purple family first; semantic colours only where meaning requires. */
 export function useChartTheme() {
   const { theme } = useTheme();
   return useMemo(() => {

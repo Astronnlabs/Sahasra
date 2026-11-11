@@ -1,6 +1,6 @@
 /**
  * Single entry point for data access. UI code imports from here only.
- * Every call goes to the SAHASRA API server (see /backend), which stores data in PostgreSQL.
+ * Every call goes to the SAHAASRA API server (see /backend), which stores data in PostgreSQL.
  */
 export { ApiError, PLAN_REQUIRED_EVENT, SESSION_EXPIRED_EVENT } from './api/client';
 export { authService, type LoginInput, type MePayload, type PlanPeriod, type ServerWorkspace, type SessionInfo, type SignupInput, type SubscriptionState } from './api/auth';

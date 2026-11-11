@@ -8,7 +8,7 @@ export const TEMPLATES_KEY = ['bill-templates'];
 const PRESET_IDS = new Set(PRESET_TEMPLATES.map((t) => t.id));
 
 /**
- * Sahasra's preset templates merged with the business's saved templates (stored on the server).
+ * Sahaasra's preset templates merged with the business's saved templates (stored on the server).
  * Editing a preset saves the business's own copy under the same id.
  */
 export function useTemplates() {
@@ -69,7 +69,7 @@ export function useTemplates() {
     [templates, stored, save, refresh],
   );
 
-  /** Discards the business's edits to Sahasra presets (custom templates are kept). */
+  /** Discards the business's edits to Sahaasra presets (custom templates are kept). */
   const resetAll = useCallback(async () => {
     try {
       for (const t of stored.filter((s) => PRESET_IDS.has(s.id))) {

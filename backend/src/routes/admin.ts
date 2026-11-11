@@ -42,7 +42,7 @@ adminRouter.put('/users/:id', requireTenant, guard('users', 'edit'), async (req,
   const b = userSchema.partial().extend({ status: z.enum(['active', 'suspended']).optional() }).parse(req.body);
   const u = await db.user.findFirst({ where: { id: String(req.params.id), tenantId: tid(req) } });
   if (!u) throw notFound('User');
-  if (u.role === 'Owner' && (b.role && b.role !== 'Owner' || b.status === 'suspended')) throw forbidden('The owner cannot be demoted or suspended here. Contact Sahasra support.');
+  if (u.role === 'Owner' && (b.role && b.role !== 'Owner' || b.status === 'suspended')) throw forbidden('The owner cannot be demoted or suspended here. Contact Sahaasra support.');
   if (u.id === req.auth!.user.id && b.status === 'suspended') throw badRequest('You cannot suspend yourself.');
   if (b.role && b.role !== u.role) await assertRole(tid(req), b.role, req.auth!.user.role);
   if (b.email || b.phone) await assertLoginFree(b.email ?? u.email, b.phone ?? u.phone, u.id);
@@ -55,7 +55,7 @@ adminRouter.put('/users/:id', requireTenant, guard('users', 'edit'), async (req,
 adminRouter.post('/users/:id/reset-password', requireTenant, guard('users', 'edit'), async (req, res) => {
   const u = await db.user.findFirst({ where: { id: String(req.params.id), tenantId: tid(req) } });
   if (!u) throw notFound('User');
-  if (u.role === 'Owner' && req.auth!.user.id !== u.id) throw forbidden("Only Sahasra support can reset the owner's password.");
+  if (u.role === 'Owner' && req.auth!.user.id !== u.id) throw forbidden("Only Sahaasra support can reset the owner's password.");
   const tempPassword = generatePassword();
   await db.user.update({ where: { id: u.id }, data: { passwordHash: await hashPassword(tempPassword) } });
   await db.session.deleteMany({ where: { userId: u.id } });
@@ -154,7 +154,7 @@ adminRouter.get('/audit-logs', requireTenant, guard('audit-logs'), async (req, r
 // ════════ Support (business side) ════════
 adminRouter.get('/support/tickets', requireTenant, async (req, res) => {
   const rows = await db.ticket.findMany({ where: { tenantId: tid(req) }, include: { messages: true, tenant: { select: { name: true } } }, orderBy: { updatedAt: 'desc' } });
-  // Internal notes from the Sahasra team are never sent to the business.
+  // Internal notes from the Sahaasra team are never sent to the business.
   res.json(rows.map((t) => ({ ...ticketOut(t), messages: ticketOut(t).messages.filter((m) => m.from !== 'note') })));
 });
 

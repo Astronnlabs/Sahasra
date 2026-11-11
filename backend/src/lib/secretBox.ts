@@ -8,7 +8,7 @@ import { HttpError } from './http.js';
  */
 function key() {
   const raw = config.TOKEN_ENCRYPTION_KEY ? Buffer.from(config.TOKEN_ENCRYPTION_KEY, 'base64') : null;
-  if (!raw || raw.length !== 32) throw new HttpError(503, 'E-billing is not set up on the server yet (TOKEN_ENCRYPTION_KEY is missing). Please contact Sahasra support.');
+  if (!raw || raw.length !== 32) throw new HttpError(503, 'E-billing is not set up on the server yet (TOKEN_ENCRYPTION_KEY is missing). Please contact Sahaasra support.');
   return raw;
 }
 

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 /**
  * Printer setup for THIS computer (each counter has its own printer), kept in the browser.
- * When the Sahasra printer service is installed on the computer, bills print straight to the
+ * When the Sahaasra printer service is installed on the computer, bills print straight to the
  * chosen printer; otherwise the browser's print window opens. Users never pick a "mode".
  */
 /** What is being printed: customer bills, or kitchen order tickets (KOT). */
@@ -19,10 +19,10 @@ export interface JobPrinter {
 
 export type PrinterSettings = Record<PrintJob, JobPrinter>;
 
-const KEY = 'sahasra:printer';
-const EVENT = 'sahasra:printer-settings';
+const KEY = 'sahaasra:printer';
+const EVENT = 'sahaasra:printer-settings';
 const SERVICE_URL = 'http://127.0.0.1:17777';
-export const SAHASRA_PRINTER_DOWNLOAD = '/downloads/SahasraPrinter.exe';
+export const SAHAASRA_PRINTER_DOWNLOAD = '/downloads/SahasraPrinter.exe';
 const DEFAULTS: PrinterSettings = { bill: { printer: '', copies: 1, auto: false }, kot: { printer: '', copies: 1, auto: true } };
 
 const clean = (j: Partial<JobPrinter> | undefined, d: JobPrinter): JobPrinter => ({

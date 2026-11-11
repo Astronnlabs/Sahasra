@@ -46,7 +46,7 @@ export function EBillingSection() {
   return (
     <div className="space-y-5">
       <Section title="E-Billing on WhatsApp" description="Every bill is sent to your customer’s WhatsApp automatically, from your WhatsApp number connected in VAAHAK.">
-        {!s.serverReady && <Notice tone="danger" icon={AlertTriangle}>E-billing is not switched on for SAHASRA yet. Please contact Sahasra support.</Notice>}
+        {!s.serverReady && <Notice tone="danger" icon={AlertTriangle}>E-billing is not switched on for SAHAASRA yet. Please contact Sahaasra support.</Notice>}
         <EnableRow enabled={enabled} canEnable={!!s.link && ready} />
         {s.link && lowWallet && (
           <Notice tone="warning" icon={AlertTriangle}>
@@ -109,7 +109,7 @@ function ConnectForm({ disabled, onChange }: { disabled: boolean; onChange: (s: 
       </ol>
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField label="VAAHAK Account ID"><Input value={f.accountId} onChange={(e) => setF({ ...f, accountId: e.target.value.trim() })} autoComplete="off" placeholder="e.g. cmuis6kra0004f0v7yenitb5r" /></FormField>
-        <FormField label="Connection key" hint="Starts with vk_live_. SAHASRA keeps it encrypted.">
+        <FormField label="Connection key" hint="Starts with vk_live_. SAHAASRA keeps it encrypted.">
           <Input type="password" autoComplete="off" value={f.key} onChange={(e) => setF({ ...f, key: e.target.value.trim() })} placeholder="vk_live_…" />
         </FormField>
       </div>

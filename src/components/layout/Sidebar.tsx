@@ -98,7 +98,7 @@ export function Sidebar() {
       aria-label="Primary"
     >
       <div className={cn('flex h-16 shrink-0 items-center', collapsed ? 'justify-center' : 'px-5')}>
-        <NavLink to="/dashboard" aria-label="Sahasra home">
+        <NavLink to="/dashboard" aria-label="Sahaasra home">
           {collapsed ? <LogoMark /> : <Logo />}
         </NavLink>
       </div>

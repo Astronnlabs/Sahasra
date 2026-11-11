@@ -81,7 +81,7 @@ export function UploadMapper({ onCreate }: { onCreate: (tpl: Omit<InvoiceTemplat
         <div className="text-center">
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-light text-primary"><Wand2 className="h-6 w-6" /></span>
           <h2 className="mt-4 text-xl font-semibold tracking-tight">Use your existing invoice</h2>
-          <p className="mx-auto mt-1.5 max-w-md text-[13.5px] text-muted-foreground">Open a bill you already use as a reference, tick the parts it has, and Sahasra builds a matching template you can fine-tune.</p>
+          <p className="mx-auto mt-1.5 max-w-md text-[13.5px] text-muted-foreground">Open a bill you already use as a reference, tick the parts it has, and Sahaasra builds a matching template you can fine-tune.</p>
         </div>
         <label
           onDragOver={(e) => { e.preventDefault(); setDragging(true); }}

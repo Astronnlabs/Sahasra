@@ -1,30 +1,34 @@
-# SAHASRA website
+# SAHAASRA website
 
-The public website for SAHASRA: home (features and industries), pricing, contact, and the terms, privacy and refund pages that PayU checks.
-It is plain HTML and CSS with no build step.
+The public website for SAHAASRA: home (features and industries), pricing, contact, and the terms, privacy and
+refund pages that PayU checks. Built with React, TypeScript, Tailwind CSS and Vite.
 
-- **Login** opens `APP_URL/login` in the SAHASRA software.
+- **Login** opens `APP_URL/login` in the SAHAASRA software.
 - **Sign up** opens `APP_URL/signup`, where anyone can create a business account.
 - **Get started** on the pricing page opens sign-up with the period already chosen (`/signup?plan=build&period=yearly`).
 - No payment is taken on the website. After signing up, customers buy the plan inside the software (PayU hosted checkout).
 
 ## Edit
 
-All settings are in [assets/config.js](assets/config.js):
+All settings are in [src/config.ts](src/config.ts):
 
-- `APP_URL` is the address of the SAHASRA software.
-- `COMPANY` holds the legal name, registered address, support email and phone, and GSTIN. These show on the Contact and policy pages.
-- `PLANS` holds the prices shown on the website. The amount actually charged comes from `backend/src/lib/subscription.ts`, so keep the two the same.
+- `APP_URL` is the address of the SAHAASRA software (`https://app.sahaasra.in`). `VITE_APP_URL` overrides it at build time.
+- `COMPANY` holds the legal name, registered address, support email and phone, GSTIN and support hours.
+- `PLANS` holds the prices shown on the website. The amount actually charged comes from
+  `backend/src/lib/subscription.ts`, so keep the two the same.
 
-## Preview
+Pages are in [src/pages](src/pages), the header and footer in [src/components/Layout.tsx](src/components/Layout.tsx).
 
-Open `index.html` in a browser, or run `npx serve website` from the project folder.
+## Run and build
 
-## Deploy (Render static site)
+```
+cd website
+npm install
+npm run dev      # http://localhost:5180
+npm run build    # output in website/dist
+```
 
-1. In Render, go to New → Static Site and pick this repository.
-2. Set the root directory to `website`.
-3. Leave the build command empty and set the publish directory to `.`.
-4. Optional: add your own domain (for example `sahasra.in`) under Settings → Custom Domains.
+## Hosting
 
-Vercel and Netlify work the same way: point them at the `website` folder with no build command.
+On our server, `deploy/vps/deploy.sh` builds it and nginx serves `website/dist` at https://sahaasra.in
+(see [deploy/vps/README.md](../deploy/vps/README.md)). Every path falls back to `index.html`.

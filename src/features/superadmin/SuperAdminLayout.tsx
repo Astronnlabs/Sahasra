@@ -78,7 +78,7 @@ export function SuperAdminLayout() {
           <NavItems openTickets={openTickets} />
         </div>
         <div className="m-3 rounded-xl bg-primary-soft p-3 text-xs text-muted-foreground">
-          <p className="font-semibold text-foreground">Sahasra Platform Console</p>
+          <p className="font-semibold text-foreground">Sahaasra Platform Console</p>
           Manage every business, user and support request.
         </div>
       </aside>

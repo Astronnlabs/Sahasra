@@ -134,8 +134,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   if (isError && !me) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-6 text-center">
-        <p className="text-base font-semibold">Can’t reach the SAHASRA server</p>
-        <p className="max-w-sm text-[13px] text-muted-foreground">Check your internet connection. If you run SAHASRA yourself, make sure the API server is started.</p>
+        <p className="text-base font-semibold">Can’t reach the SAHAASRA server</p>
+        <p className="max-w-sm text-[13px] text-muted-foreground">Check your internet connection. If you run SAHAASRA yourself, make sure the API server is started.</p>
         <button type="button" className="mt-2 rounded-lg bg-primary px-4 py-2 text-[13px] font-medium text-white" onClick={() => refetch()}>
           Try again
         </button>

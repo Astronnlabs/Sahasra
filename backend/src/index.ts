@@ -7,7 +7,7 @@ const app = createApp();
 
 await db.$connect();
 const server = app.listen(config.PORT, () => {
-  console.log(`SAHASRA API listening on http://localhost:${config.PORT}`);
+  console.log(`SAHAASRA API listening on http://localhost:${config.PORT}`);
 });
 
 // Housekeeping: remove expired sessions every hour.

@@ -26,8 +26,8 @@ interface EditorProps {
   onChange: (t: InvoiceTemplate) => void;
 }
 
-const DRAG_NEW = 'application/x-sahasra-new';
-const DRAG_MOVE = 'application/x-sahasra-move';
+const DRAG_NEW = 'application/x-sahaasra-new';
+const DRAG_MOVE = 'application/x-sahaasra-move';
 
 export function Editor({ template, onChange }: EditorProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);

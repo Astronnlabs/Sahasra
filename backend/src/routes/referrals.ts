@@ -52,7 +52,7 @@ referralsRouter.patch('/platform/referrals/:id', requireSuperAdmin, async (req, 
   if (!r) throw notFound('Referral');
   const updated = await db.referral.update({ where: { id: r.id }, data: { status } });
   await db.auditLog
-    .create({ data: { tenantId: r.tenantId, userId: req.auth!.user.id, user: `${req.auth!.user.name} (Sahasra Support)`, action: 'edited', module: 'Referrals', target: r.businessName.slice(0, 200), details: `Referral marked ${status}`, ip: req.ip ?? '' } })
+    .create({ data: { tenantId: r.tenantId, userId: req.auth!.user.id, user: `${req.auth!.user.name} (Sahaasra Support)`, action: 'edited', module: 'Referrals', target: r.businessName.slice(0, 200), details: `Referral marked ${status}`, ip: req.ip ?? '' } })
     .catch((e) => console.error('audit failed', e));
   res.json(referralOut(updated));
 });

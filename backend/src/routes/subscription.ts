@@ -23,7 +23,7 @@ import { requireTenant, tid } from '../middleware/auth.js';
 export const subscriptionRouter = Router();
 subscriptionRouter.use('/subscription', requireTenant);
 
-/** Only the business owner or an admin pays; Sahasra support (support mode) can only look. */
+/** Only the business owner or an admin pays; Sahaasra support (support mode) can only look. */
 const canBuy = (req: Request) => !req.auth!.impersonating && ['Owner', 'Admin'].includes(req.auth!.user.role);
 
 async function overview(req: Request) {
@@ -58,7 +58,7 @@ subscriptionRouter.post('/subscription/checkout', async (req, res) => {
   const form = checkoutForm({
     txnid,
     amount: price.toFixed(2),
-    productinfo: `SAHASRA ${p.name} plan ${PERIODS[period as keyof typeof PERIODS].label}`,
+    productinfo: `SAHAASRA ${p.name} plan ${PERIODS[period as keyof typeof PERIODS].label}`,
     firstname: t.ownerName || req.auth!.user.name,
     email: req.auth!.user.email || t.ownerEmail,
     phone: req.auth!.user.phone || t.ownerPhone,
@@ -108,7 +108,7 @@ export async function payuReturn(req: Request, res: Response) {
     .type('html')
     .set('Cache-Control', 'no-store')
     .send(
-      `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=${target}"><title>Returning to SAHASRA</title></head>` +
-        `<body style="font-family:system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;color:#334155"><p>Returning to SAHASRA… <a href="${target}">Continue</a></p></body></html>`,
+      `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=${target}"><title>Returning to SAHAASRA</title></head>` +
+        `<body style="font-family:system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;color:#334155"><p>Returning to SAHAASRA… <a href="${target}">Continue</a></p></body></html>`,
     );
 }

@@ -3,7 +3,7 @@ import { HttpError } from './http.js';
 
 /**
  * VAAHAK API client. VAAHAK sends each bill on the business's own WhatsApp number (connected in
- * VAAHAK) and pays for it from the business's VAAHAK wallet. SAHASRA only keeps the account ID and
+ * VAAHAK) and pays for it from the business's VAAHAK wallet. SAHAASRA only keeps the account ID and
  * the connection key (encrypted).
  */
 

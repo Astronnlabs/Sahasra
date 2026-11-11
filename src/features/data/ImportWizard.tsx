@@ -38,7 +38,7 @@ const MATCHED_BY: Record<ImportTarget, string> = {
   customers: 'Existing records are matched by mobile number.',
   vendors: 'Existing records are matched by mobile number.',
   employees: 'Existing staff are matched by mobile number.',
-  sales: 'Bills already in Sahasra (same bill number) are skipped. Old bills don’t change today’s stock.',
+  sales: 'Bills already in Sahaasra (same bill number) are skipped. Old bills don’t change today’s stock.',
   appointments: 'Bookings for the same customer and time are matched.',
   attendance: 'Staff are matched by name; one mark per person per day.',
 };
@@ -52,7 +52,7 @@ const sumResults = (list: ImportResult[]): ImportResult => ({
   rows: list.flatMap((r) => r.rows),
 });
 
-/** Settings → Your data → Import: upload a spreadsheet or SQL dump, review how Sahasra understood it, then save. */
+/** Settings → Your data → Import: upload a spreadsheet or SQL dump, review how Sahaasra understood it, then save. */
 export function ImportWizard({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const qc = useQueryClient();
   const { can } = usePageAccess();
@@ -198,7 +198,7 @@ export function ImportWizard({ open, onOpenChange }: { open: boolean; onOpenChan
       title={step === 'done' ? 'Import finished' : 'Import data'}
       description={
         step === 'file'
-          ? 'Upload a file — Sahasra reads every table and column, works out what it is and adds it to your records.'
+          ? 'Upload a file — Sahaasra reads every table and column, works out what it is and adds it to your records.'
           : step === 'map'
             ? `${fileName} · ${many ? `${tables.length} tables, ${included.length} to import · ` : ''}${totalRows.toLocaleString('en-IN')} row${totalRows === 1 ? '' : 's'}`
             : undefined
@@ -244,7 +244,7 @@ export function ImportWizard({ open, onOpenChange }: { open: boolean; onOpenChan
               ))}
             </div>
             <p className="flex items-start gap-1.5 text-xs text-muted-foreground"><Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" /> Column names don’t need to match. “Cust Name”, “User” or “Party” become the customer name, “Mob No” becomes the mobile, “Rate” becomes the price — and so on.</p>
-            <p className="flex items-start gap-1.5 text-xs text-muted-foreground"><Database className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" /> From another software? Export its database as a .sql file — Sahasra reads every table in it and only takes the data. Nothing in the file is run.</p>
+            <p className="flex items-start gap-1.5 text-xs text-muted-foreground"><Database className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" /> From another software? Export its database as a .sql file — Sahaasra reads every table in it and only takes the data. Nothing in the file is run.</p>
           </div>
         ) : (
           <p className="text-[13px] text-muted-foreground">Your role can’t add products, customers or vendors, so there’s nothing you can import.</p>
@@ -307,7 +307,7 @@ export function ImportWizard({ open, onOpenChange }: { open: boolean; onOpenChan
               <div className="flex items-start gap-2 rounded-xl bg-primary-soft px-3 py-2.5 text-[13px]">
                 <Wand2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <span>
-                  {many && <b>{current.sheet.name}: </b>}Sahasra matched <b>{matched}</b> of {current.plan.length} columns as <b>{TARGETS[current.target].label.toLowerCase()}</b>. Change any match that’s wrong.
+                  {many && <b>{current.sheet.name}: </b>}Sahaasra matched <b>{matched}</b> of {current.plan.length} columns as <b>{TARGETS[current.target].label.toLowerCase()}</b>. Change any match that’s wrong.
                   {' '}{MATCHED_BY[current.target]}
                 </span>
               </div>

@@ -19,7 +19,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    if (import.meta.env.DEV) console.error('Sahasra UI error', error, info.componentStack);
+    if (import.meta.env.DEV) console.error('Sahaasra UI error', error, info.componentStack);
   }
 
   componentDidUpdate(prev: Props) {

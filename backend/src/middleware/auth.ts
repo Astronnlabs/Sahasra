@@ -63,7 +63,7 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
 
 export function requireSuperAdmin(req: Request, _res: Response, next: NextFunction) {
   if (!req.auth) throw unauthorized();
-  if (!req.auth.isSuperAdmin) throw forbidden('Only the Sahasra platform owner can do this.');
+  if (!req.auth.isSuperAdmin) throw forbidden('Only the Sahaasra platform owner can do this.');
   next();
 }
 
@@ -72,7 +72,7 @@ export function requireTenant(req: Request, _res: Response, next: NextFunction) 
   const a = req.auth;
   if (!a) throw unauthorized();
   if (!a.tenant) throw forbidden(a.isSuperAdmin ? 'Open a business in support mode first.' : 'Your account is not linked to a business.');
-  if (a.tenant.status === 'suspended' || a.tenant.status === 'churned') throw forbidden(`${a.tenant.name} is suspended. Please contact Sahasra support.`);
+  if (a.tenant.status === 'suspended' || a.tenant.status === 'churned') throw forbidden(`${a.tenant.name} is suspended. Please contact Sahaasra support.`);
   next();
 }
 
@@ -114,7 +114,7 @@ export function guard(page: PageId | PageId[], action?: Permission) {
 
 /** Blocks cross-site form posts: mutations must come from our app with a custom header. */
 export function csrfGuard(req: Request, _res: Response, next: NextFunction) {
-  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && req.get('x-sahasra-client') !== 'web') {
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && req.get('x-sahaasra-client') !== 'web') {
     throw forbidden('Request blocked: missing client header.');
   }
   next();

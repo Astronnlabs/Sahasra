@@ -32,7 +32,7 @@ function PaymentBadge({ status }: { status: PlanPaymentRow['status'] }) {
   return <Badge tone="warning">Pending</Badge>;
 }
 
-/** Buy or renew the SAHASRA plan with PayU (hosted checkout). */
+/** Buy or renew the SAHAASRA plan with PayU (hosted checkout). */
 export function SubscriptionPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -137,7 +137,7 @@ export function SubscriptionPage() {
         <div>
           <p className="text-[13px] text-muted-foreground">{data.businessName}</p>
           <h1 className="mt-1 text-[26px] font-semibold tracking-[-0.02em]">{locked ? 'Choose your plan to start' : 'Plan & billing'}</h1>
-          {locked && <p className="mt-1.5 max-w-2xl text-[13.5px] text-muted-foreground">Your account is ready. Buy the {plan.name} plan to start billing with SAHASRA. Payment is taken securely on PayU’s page (UPI, cards, net banking).</p>}
+          {locked && <p className="mt-1.5 max-w-2xl text-[13.5px] text-muted-foreground">Your account is ready. Buy the {plan.name} plan to start billing with SAHAASRA. Payment is taken securely on PayU’s page (UPI, cards, net banking).</p>}
         </div>
 
         {/* Current status */}
@@ -224,7 +224,7 @@ export function SubscriptionPage() {
             ) : (
               <p className="mt-5 rounded-lg bg-surface p-3 text-[13px] text-muted-foreground">Only the business owner or an admin can buy the plan. Ask them to sign in and pay.</p>
             )}
-            {!data.canPay && <p className="mt-2 text-xs text-danger">Online payment is not set up on the server yet. Please contact Sahasra support.</p>}
+            {!data.canPay && <p className="mt-2 text-xs text-danger">Online payment is not set up on the server yet. Please contact Sahaasra support.</p>}
             <p className="mt-3 text-center text-2xs text-subtle">You’ll be taken to PayU’s secure page and brought back here after paying.</p>
           </div>
         </section>

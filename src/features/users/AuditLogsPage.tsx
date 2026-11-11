@@ -60,7 +60,7 @@ export function AuditLogsPage() {
           <Button
             variant="secondary"
             onClick={() => {
-              downloadTextFile('sahasra-audit-log.csv', toCsv(filtered.map((l) => ({ User: l.user, Action: l.action, Module: l.module, Target: l.target, Details: l.details, Date: format(parseISO(l.at), 'dd MMM yyyy'), Time: formatTime(l.at), IP: l.ip }))), 'text/csv');
+              downloadTextFile('sahaasra-audit-log.csv', toCsv(filtered.map((l) => ({ User: l.user, Action: l.action, Module: l.module, Target: l.target, Details: l.details, Date: format(parseISO(l.at), 'dd MMM yyyy'), Time: formatTime(l.at), IP: l.ip }))), 'text/csv');
               toast.success('Audit log exported');
             }}
           >

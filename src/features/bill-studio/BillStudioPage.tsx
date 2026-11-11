@@ -106,7 +106,7 @@ export function BillStudioPage() {
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-primary"><Palette className="h-5 w-5" /></span>
           <div>
-            <h1 className="text-xl font-semibold tracking-tight">Sahasra Bill Studio</h1>
+            <h1 className="text-xl font-semibold tracking-tight">Sahaasra Bill Studio</h1>
             <p className="text-xs text-muted-foreground">{hasKot ? 'Design your invoices and kitchen tickets (KOT).' : 'Design invoices that look exactly like your brand.'}</p>
           </div>
         </div>
@@ -170,7 +170,7 @@ export function BillStudioPage() {
             ))}
           </div>
           <div className="mt-6 text-center">
-            <Button variant="ghost" size="sm" onClick={async () => { await resetAll(); toast.success('Sahasra templates restored', { description: 'Your own templates were kept.' }); }}><RotateCcw /> Restore default templates</Button>
+            <Button variant="ghost" size="sm" onClick={async () => { await resetAll(); toast.success('Sahaasra templates restored', { description: 'Your own templates were kept.' }); }}><RotateCcw /> Restore default templates</Button>
           </div>
         </div>
       )}

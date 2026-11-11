@@ -117,7 +117,7 @@ export function ProductsPage() {
 
   const exportCsv = () => {
     downloadTextFile(
-      `sahasra-products-${new Date().toISOString().slice(0, 10)}.csv`,
+      `sahaasra-products-${new Date().toISOString().slice(0, 10)}.csv`,
       toCsv((data ?? []).map((p) => ({ Name: p.name, SKU: p.sku, Category: p.category, Stock: p.stock, 'Purchase Price': p.purchasePrice, 'Selling Price': p.sellingPrice, GST: `${p.gstRate}%`, HSN: p.hsn }))),
       'text/csv',
     );

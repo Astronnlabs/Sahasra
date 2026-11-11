@@ -75,7 +75,7 @@ export function SearchCommand({ open, onOpenChange }: { open: boolean; onOpenCha
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#0f0c1d]/40 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content className="fixed left-1/2 top-[12vh] z-50 w-[calc(100%-2rem)] max-w-[640px] -translate-x-1/2 overflow-hidden rounded-2xl border border-border bg-card shadow-pop data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.98]">
-          <DialogPrimitive.Title className="sr-only">Search Sahasra</DialogPrimitive.Title>
+          <DialogPrimitive.Title className="sr-only">Search Sahaasra</DialogPrimitive.Title>
           <DialogPrimitive.Description className="sr-only">Search customers, invoices, products, vendors, employees, services and pages.</DialogPrimitive.Description>
           <Command shouldFilter={false} loop label="Global search">
             <div className="flex items-center gap-3 border-b border-border px-4">

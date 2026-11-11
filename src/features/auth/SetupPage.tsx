@@ -58,7 +58,7 @@ export function SetupPage() {
         <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-light text-primary">
           <ShieldCheck className="h-5 w-5" />
         </span>
-        <h1 className="mt-4 text-[24px] font-semibold tracking-[-0.02em]">Set up SAHASRA</h1>
+        <h1 className="mt-4 text-[24px] font-semibold tracking-[-0.02em]">Set up SAHAASRA</h1>
         <p className="mt-1.5 text-[13.5px] text-muted-foreground">
           Create the platform owner account. You’ll use it to add businesses, manage their access and answer support requests.
         </p>

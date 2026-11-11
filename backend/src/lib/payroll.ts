@@ -37,7 +37,7 @@ export const payrollSettingsSchema = z.object({
 });
 export type PayrollSettings = z.infer<typeof payrollSettingsSchema>;
 
-/** The deductions Sahasra always used (PF 12% + ₹200 professional tax), so pay doesn't change until the owner edits them. */
+/** The deductions Sahaasra always used (PF 12% + ₹200 professional tax), so pay doesn't change until the owner edits them. */
 export const DEFAULT_PAYROLL_SETTINGS: PayrollSettings = {
   pf: { enabled: true, pct: 12, on: 'full', basicPct: 50, wageCap: 0 },
   esi: { enabled: false, pct: 0.75, maxSalary: 21000 },

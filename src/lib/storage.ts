@@ -1,5 +1,5 @@
 /** Safe wrappers around Web Storage — storage can throw in private mode or when blocked. */
-const PREFIX = 'sahasra.';
+const PREFIX = 'sahaasra.';
 
 type StorageKind = 'local' | 'session';
 

@@ -16,7 +16,7 @@ interface Message {
 const WELCOME: Message = {
   id: 0,
   role: 'assistant',
-  text: 'Namaste! I’m Sahasra AI. Ask me about your sales, stock, dues or customers.',
+  text: 'Namaste! I’m Sahaasra AI. Ask me about your sales, stock, dues or customers.',
 };
 
 export function AssistantWidget() {
@@ -56,7 +56,7 @@ export function AssistantWidget() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label={open ? 'Close Sahasra AI' : 'Open Sahasra AI'}
+        aria-label={open ? 'Close Sahaasra AI' : 'Open Sahaasra AI'}
         aria-expanded={open}
         className={cn(
           'fixed bottom-20 right-4 z-40 flex h-12 items-center gap-2 rounded-full bg-primary pl-3.5 pr-4 text-[13px] font-semibold text-white shadow-[0_10px_30px_-8px_rgb(109_61_232/0.7)] transition-all duration-200 hover:bg-primary-hover hover:shadow-[0_12px_34px_-6px_rgb(109_61_232/0.75)] lg:bottom-6 lg:right-6',
@@ -64,13 +64,13 @@ export function AssistantWidget() {
         )}
       >
         {open ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
-        {!open && <span className="hidden sm:inline">Sahasra AI</span>}
+        {!open && <span className="hidden sm:inline">Sahaasra AI</span>}
       </button>
 
       {open && (
         <section
           role="dialog"
-          aria-label="Sahasra AI assistant"
+          aria-label="Sahaasra AI assistant"
           className="fixed inset-x-3 bottom-36 z-40 flex max-h-[min(70vh,600px)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-pop animate-fade-up sm:inset-x-auto sm:right-6 sm:w-[380px] lg:bottom-[5.5rem]"
         >
           <header className="flex items-center gap-3 border-b border-border bg-gradient-to-br from-primary to-primary-dark px-4 py-3.5 text-white">
@@ -78,7 +78,7 @@ export function AssistantWidget() {
               <Bot className="h-5 w-5" />
             </span>
             <div className="flex-1">
-              <p className="text-sm font-semibold">Sahasra AI</p>
+              <p className="text-sm font-semibold">Sahaasra AI</p>
               <p className="text-2xs text-white/75">Business insights from your workspace data</p>
             </div>
             <button type="button" onClick={() => setOpen(false)} className="rounded-lg p-1.5 text-white/80 hover:bg-white/10 hover:text-white" aria-label="Close">
@@ -120,7 +120,7 @@ export function AssistantWidget() {
             ))}
             {thinking && (
               <div className="flex">
-                <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-surface px-4 py-3" aria-label="Sahasra AI is thinking">
+                <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-surface px-4 py-3" aria-label="Sahaasra AI is thinking">
                   {[0, 1, 2].map((i) => (
                     <span key={i} className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary/60" style={{ animationDelay: `${i * 120}ms` }} />
                   ))}
@@ -148,7 +148,7 @@ export function AssistantWidget() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about your business…"
               maxLength={300}
-              aria-label="Ask Sahasra AI"
+              aria-label="Ask Sahaasra AI"
               className="h-10 flex-1 rounded-xl border border-border bg-surface/60 px-3.5 text-[13px] outline-none transition-colors placeholder:text-subtle focus:border-primary/50 focus:bg-card"
             />
             <Button type="submit" size="icon" className="h-10 w-10 rounded-xl" disabled={!input.trim() || thinking} aria-label="Send">

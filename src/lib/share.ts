@@ -6,14 +6,14 @@ export function openWhatsApp(phone: string | undefined, text: string) {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
-const PRINT_ROOT = 'sahasra-print-root';
+const PRINT_ROOT = 'sahaasra-print-root';
 const PRINT_STYLE = `
 #${PRINT_ROOT}{display:none}
 @media print{
   @page{margin:6mm}
   html,body{background:#fff!important;height:auto!important;overflow:visible!important;margin:0!important;padding:0!important}
-  body.sahasra-printing>*:not(#${PRINT_ROOT}){display:none!important}
-  body.sahasra-printing #${PRINT_ROOT}{display:block!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.sahaasra-printing>*:not(#${PRINT_ROOT}){display:none!important}
+  body.sahaasra-printing #${PRINT_ROOT}{display:block!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #${PRINT_ROOT},#${PRINT_ROOT} *{visibility:visible!important}
   #${PRINT_ROOT} .print-area{position:static!important}
   #${PRINT_ROOT}>*{box-shadow:none!important;border-radius:0!important;margin:0 auto!important}
@@ -60,13 +60,13 @@ export function printElement(el: HTMLElement, title: string) {
     // The page title becomes the PDF's file name.
     const oldTitle = document.title;
     document.title = title.replace(/[<>&"]/g, '');
-    document.body.classList.add('sahasra-printing');
+    document.body.classList.add('sahaasra-printing');
     let done = false;
     const cleanup = () => {
       if (done || !root.isConnected) return;
       done = true;
       document.title = oldTitle;
-      document.body.classList.remove('sahasra-printing');
+      document.body.classList.remove('sahaasra-printing');
       root.remove();
     };
     window.addEventListener('afterprint', () => setTimeout(cleanup, 300), { once: true });

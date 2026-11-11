@@ -92,7 +92,7 @@ export function TicketThread({ ticket, viewer, onSend, sending }: Props) {
               }}
               rows={2}
               maxLength={2000}
-              placeholder={viewer === 'customer' ? 'Write a message to Sahasra Support…' : note ? 'Only your team will see this note…' : `Reply to ${ticket.requester}…`}
+              placeholder={viewer === 'customer' ? 'Write a message to Sahaasra Support…' : note ? 'Only your team will see this note…' : `Reply to ${ticket.requester}…`}
               aria-label="Message"
               className="min-h-[44px] flex-1 resize-none rounded-xl border border-border bg-card px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50"
             />

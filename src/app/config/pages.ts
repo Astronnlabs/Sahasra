@@ -48,7 +48,7 @@ export const PAGE_CATALOG: PageDef[] = [
   { id: 'notifications', label: 'Notifications', group: 'Administration', description: 'Alerts', paths: ['/notifications'] },
   { id: 'audit-logs', label: 'Audit Logs', group: 'Administration', description: 'Change history', paths: ['/audit-logs'] },
   { id: 'settings', label: 'Settings', group: 'Administration', description: 'Business and app settings', paths: ['/settings'] },
-  { id: 'support', label: 'Help & Support', group: 'Administration', description: 'Contact Sahasra support', paths: ['/support'], locked: true },
+  { id: 'support', label: 'Help & Support', group: 'Administration', description: 'Contact Sahaasra support', paths: ['/support'], locked: true },
 ];
 
 /** Role-permission module that governs each page (mirrors the server). `null` = every signed-in user. */

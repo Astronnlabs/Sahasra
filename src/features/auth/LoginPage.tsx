@@ -46,7 +46,7 @@ function ForgotPasswordModal({ open, onOpenChange }: { open: boolean; onOpenChan
         <p className="flex gap-2.5">
           <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <span>
-            <b className="text-foreground">Business owners:</b> contact Sahasra support. After verifying your identity, we’ll issue a temporary password.
+            <b className="text-foreground">Business owners:</b> contact Sahaasra support. After verifying your identity, we’ll issue a temporary password.
           </span>
         </p>
         <p>Change the temporary password from Settings → Security after signing in.</p>
@@ -163,7 +163,7 @@ export function LoginPage() {
             </div>
 
             <p className="mt-6 text-center text-[13px] text-muted-foreground">
-              New to Sahasra?{' '}
+              New to Sahaasra?{' '}
               <Link to="/signup" className="font-medium text-primary hover:underline">
                 Create your account
               </Link>

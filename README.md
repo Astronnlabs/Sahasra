@@ -1,4 +1,4 @@
-# SAHASRA
+# SAHAASRA
 
 **Everything Your Business Needs. In One Place.**
 
@@ -15,11 +15,11 @@ You need **Node.js 20+** and **PostgreSQL 14+**.
 
 ### 1. Database
 
-Create a database and a user for SAHASRA (in `psql` as a superuser):
+Create a database and a user for SAHAASRA (in `psql` as a superuser):
 
 ```sql
-CREATE ROLE sahasra LOGIN PASSWORD 'choose-a-strong-password' CREATEDB;
-CREATE DATABASE sahasra OWNER sahasra;
+CREATE ROLE sahaasra LOGIN PASSWORD 'choose-a-strong-password' CREATEDB;
+CREATE DATABASE sahaasra OWNER sahaasra;
 ```
 
 ### 2. API server
@@ -41,20 +41,20 @@ npm run dev                   # http://localhost:5173 (requests to /api are prox
 
 ### 4. First run
 
-Open http://localhost:5173. On an empty database you are taken to **Set up SAHASRA**, where you create the **platform owner (Super Admin)** account. This only works once. After that the page redirects to sign-in.
+Open http://localhost:5173. On an empty database you are taken to **Set up SAHAASRA**, where you create the **platform owner (Super Admin)** account. This only works once. After that the page redirects to sign-in.
 
 ## Accounts and sign-in
 
 - People sign in with their **email or mobile number** and password. Passwords are hashed with bcrypt. Sessions are server-side, using an httpOnly cookie (30 days with "Keep me signed in", otherwise 12 hours).
 - **Businesses** are created by the Super Admin (**Businesses → Add business**) or by the owner through **Create your business** (a 14-day trial).
-- When the Super Admin or an owner creates a login, SAHASRA shows a **one-time temporary password** to share with that person. No emails or SMS are sent. The person changes it under **Settings → Security**.
-- **Forgot password**: staff ask their owner or admin (**Users → Reset password**). Owners ask Sahasra support (Super Admin → business → **Reset owner password**).
+- When the Super Admin or an owner creates a login, SAHAASRA shows a **one-time temporary password** to share with that person. No emails or SMS are sent. The person changes it under **Settings → Security**.
+- **Forgot password**: staff ask their owner or admin (**Users → Reset password**). Owners ask Sahaasra support (Super Admin → business → **Reset owner password**).
 
 ## Super Admin portal (`/superadmin`)
 
 - **Overview** and **Growth**: businesses, new sign-ups, active users, MRR and the support queue, all computed live.
 - **Businesses**: full business details, **live location capture** (latitude, longitude, altitude, accuracy), owner details, plan, and **page access**. You can grant or remove pages at any time. The server enforces access on every request.
-- From a business you can change the plan, extend a trial, suspend or reactivate it (suspending signs its users out), reset the owner's password, and open it in **support mode**. Every action in support mode is audit-logged as "(Sahasra Support)".
+- From a business you can change the plan, extend a trial, suspend or reactivate it (suspending signs its users out), reset the owner's password, and open it in **support mode**. Every action in support mode is audit-logged as "(Sahaasra Support)".
 - **Users**: logins across all businesses (create, suspend, reset password).
 - **Support**: the ticket inbox, with replies, internal notes, status, priority and assignee. Replies notify the business.
 
@@ -71,7 +71,7 @@ Open http://localhost:5173. On an empty database you are taken to **Set up SAHAS
 - **UPI**: add your UPI ID under **Settings → Payments**. POS and invoices show a scannable UPI QR for the exact amount due. Confirm the payment in your UPI app before pressing Confirm.
 - **Invoices** print through the browser using your default **Bill Studio** template. Choose "Save as PDF" in the print dialog to download.
 - **WhatsApp** buttons open WhatsApp with a pre-filled message (invoice or payment reminder). You press Send.
-- **GST**: registers, HSN summary and the GSTR-3B tax summary export as CSV or JSON for the GST portal or your CA. SAHASRA does not file returns.
+- **GST**: registers, HSN summary and the GSTR-3B tax summary export as CSV or JSON for the GST portal or your CA. SAHAASRA does not file returns.
 - **Data export**: **Settings → Your data** downloads everything as JSON.
 
 ## Project layout

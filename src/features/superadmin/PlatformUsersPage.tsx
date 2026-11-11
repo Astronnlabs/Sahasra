@@ -124,7 +124,7 @@ export function PlatformUsersPage() {
 
   return (
     <>
-      <PageHeader title="Users" description="Everyone who can sign in to any Sahasra business." actions={<Button onClick={() => setOpen(true)}><UserPlus /> Create user</Button>} />
+      <PageHeader title="Users" description="Everyone who can sign in to any Sahaasra business." actions={<Button onClick={() => setOpen(true)}><UserPlus /> Create user</Button>} />
       <div className="stagger mb-5 grid grid-cols-2 gap-4 xl:grid-cols-4">
         <StatCard label="Total users" value={formatNumber(stats.total)} icon={UsersRound} loading={isLoading} />
         <StatCard label="Active this week" value={formatNumber(stats.active)} icon={UserCheck} loading={isLoading} />

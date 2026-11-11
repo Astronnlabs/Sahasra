@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import type { Tone } from '@/types';
 
-/** Central mapping of every status string used in Sahasra to a semantic tone. */
+/** Central mapping of every status string used in Sahaasra to a semantic tone. */
 const STATUS_TONES: Record<string, Tone> = {
   // money
   paid: 'success', partial: 'warning', unpaid: 'danger', overdue: 'danger', refunded: 'neutral', returned: 'neutral', draft: 'neutral',

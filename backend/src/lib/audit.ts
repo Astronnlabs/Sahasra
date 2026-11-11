@@ -6,7 +6,7 @@ type Action = 'created' | 'edited' | 'deleted' | 'approved' | 'exported' | 'logg
 /** Records who changed what. Never throws — auditing must not break the request. */
 export async function audit(req: Request, action: Action, module: string, target: string, details = '', tx?: Tx) {
   const a = req.auth;
-  const user = a ? (a.impersonating ? `${a.user.name} (Sahasra Support)` : a.user.name) : 'System';
+  const user = a ? (a.impersonating ? `${a.user.name} (Sahaasra Support)` : a.user.name) : 'System';
   try {
     await (tx ?? db).auditLog.create({
       data: { tenantId: a?.tenantId ?? null, userId: a?.user.id ?? null, user, action, module, target: target.slice(0, 200), details: details.slice(0, 500), ip: req.ip ?? '' },

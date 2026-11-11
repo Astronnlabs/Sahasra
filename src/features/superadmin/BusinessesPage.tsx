@@ -93,7 +93,7 @@ export function BusinessesPage() {
 
   return (
     <>
-      <PageHeader title="Businesses" description="Every customer account on the Sahasra platform." actions={<Button onClick={() => navigate('/superadmin/businesses/new')}><Plus /> Add business</Button>} />
+      <PageHeader title="Businesses" description="Every customer account on the Sahaasra platform." actions={<Button onClick={() => navigate('/superadmin/businesses/new')}><Plus /> Add business</Button>} />
       <div className="stagger mb-5 grid grid-cols-2 gap-4 xl:grid-cols-4">
         <StatCard label="Paying businesses" value={formatNumber(stats.active)} icon={Building2} loading={isLoading} />
         <StatCard label="On free trial" value={formatNumber(stats.trial)} icon={CalendarPlus} loading={isLoading} />

@@ -60,7 +60,7 @@ export function createApp() {
   api.use(subscriptionRouter);
   api.use((req, _res, next) => {
     const a = req.auth!;
-    if (a.tenant && !a.isSuperAdmin && planLocked(a.tenant)) throw new HttpError(402, 'Your SAHASRA plan is not active. Buy or renew the plan to continue.', { code: 'PLAN_REQUIRED' });
+    if (a.tenant && !a.isSuperAdmin && planLocked(a.tenant)) throw new HttpError(402, 'Your SAHAASRA plan is not active. Buy or renew the plan to continue.', { code: 'PLAN_REQUIRED' });
     next();
   });
   api.use(referralsRouter);

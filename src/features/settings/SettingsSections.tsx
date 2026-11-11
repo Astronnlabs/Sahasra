@@ -167,7 +167,7 @@ export function BusinessProfile() {
 
       <Section
         title="Subscription & Billing"
-        description="Your current Sahasra plan and service billing details."
+        description="Your current Sahaasra plan and service billing details."
       >
         {ws.astronLabsService || ws.plan === 'astron_labs' ? (
           <div className="rounded-2xl border border-primary/25 bg-primary-soft/40 p-5">
@@ -231,13 +231,13 @@ export function BusinessProfile() {
         )}
       </Section>
 
-      <Section title="Business type" description="Sahasra adapts navigation and screens to your industry.">
-        {/* Set by Sahasra when the business is created — not changeable here. */}
+      <Section title="Business type" description="Sahaasra adapts navigation and screens to your industry.">
+        {/* Set by Sahaasra when the business is created — not changeable here. */}
         <div className="flex items-center gap-3 rounded-xl border border-primary bg-primary-soft p-3 sm:max-w-sm">
           <TypeIcon className="h-4 w-4 text-primary" />
           <span className="text-[13px] font-medium">{type?.label ?? 'Other / General'}</span>
         </div>
-        <p className="text-xs text-muted-foreground">Your business type and the pages you can use are managed by Sahasra. Need a change or another module? Ask from Help &amp; Support.</p>
+        <p className="text-xs text-muted-foreground">Your business type and the pages you can use are managed by Sahaasra. Need a change or another module? Ask from Help &amp; Support.</p>
       </Section>
     </div>
   );
@@ -342,7 +342,7 @@ export function NotificationSettings() {
   return (
     <Section title="Notifications" description="In-app alerts for your business.">
       <SwitchRow title="Low stock alerts" description="When a sale takes an item to or below its minimum stock." checked={settings.notifyLowStock !== false} onChange={(v) => save.mutate({ notifyLowStock: v })} />
-      <p className="text-xs text-muted-foreground">Purchase receipts and replies from Sahasra support always notify you.</p>
+      <p className="text-xs text-muted-foreground">Purchase receipts and replies from Sahaasra support always notify you.</p>
     </Section>
   );
 }
@@ -416,7 +416,7 @@ export function Appearance() {
   const { theme, setTheme } = useTheme();
   const { sidebarCollapsed, update } = useWorkspace();
   return (
-    <Section title="Appearance" description="Personalise how Sahasra looks on this device.">
+    <Section title="Appearance" description="Personalise how Sahaasra looks on this device.">
       <div className="grid grid-cols-2 gap-3 sm:max-w-md">
         {([['light', 'Light', Sun], ['dark', 'Dark', Moon]] as const).map(([value, label, Icon]) => (
           <button key={value} type="button" onClick={() => setTheme(value)} aria-pressed={theme === value} className={cn('overflow-hidden rounded-xl border-2 text-left transition-colors', theme === value ? 'border-primary' : 'border-border hover:border-primary/40')}>
@@ -450,7 +450,7 @@ export function Backup() {
     }
   };
   return (
-    <Section title="Your data" description="Your records are stored securely on the Sahasra server. Download them any time, or bring in data from another app.">
+    <Section title="Your data" description="Your records are stored securely on the Sahaasra server. Download them any time, or bring in data from another app.">
       <div className="flex flex-col gap-3 rounded-xl border border-border p-4 lg:flex-row lg:items-center">
         <div className="flex-1">
           <p className="text-[13px] font-semibold">Download your data</p>
@@ -476,7 +476,7 @@ export function Backup() {
       <div className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary-soft/40 p-4 sm:flex-row sm:items-center">
         <div className="flex-1">
           <p className="text-[13px] font-semibold">Import data</p>
-          <p className="text-xs text-muted-foreground">Bring in products, in-house stock, customers or vendors from Excel, CSV or another software’s database (.sql). Column names don’t need to match — Sahasra works them out, updates what you already have and shows you everything before saving.</p>
+          <p className="text-xs text-muted-foreground">Bring in products, in-house stock, customers or vendors from Excel, CSV or another software’s database (.sql). Column names don’t need to match — Sahaasra works them out, updates what you already have and shows you everything before saving.</p>
         </div>
         <Button onClick={() => setImporting(true)}><Upload /> Import file</Button>
       </div>

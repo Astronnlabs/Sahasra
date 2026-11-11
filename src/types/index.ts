@@ -48,7 +48,7 @@ export interface GeoLocation {
   source: 'device' | 'manual';
 }
 
-/** A business (customer account) on the Sahasra platform. */
+/** A business (customer account) on the Sahaasra platform. */
 export interface Tenant {
   id: ID;
   name: string;

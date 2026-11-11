@@ -22,7 +22,7 @@ export const DEFAULT_KOT_DESIGN: KotDesign = {
 /** Pages that print KOTs: the KOT designer is shown only to people who can open one of them. */
 export const KOT_PAGES = ['restaurant-orders', 'restaurant-kitchen'];
 
-/** The business's saved KOT design (Bill Studio → KOT ticket), or the Sahasra default. */
+/** The business's saved KOT design (Bill Studio → KOT ticket), or the Sahaasra default. */
 export function useKotDesign(enabled = true) {
   const { data, isLoading } = useQuery({ queryKey: KOT_DESIGN_KEY, queryFn: kotDesignService.get, enabled, staleTime: 60_000 });
   return { design: { ...DEFAULT_KOT_DESIGN, ...(data?.design ?? {}) }, saved: data?.design ?? null, isLoading };

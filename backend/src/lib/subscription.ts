@@ -7,7 +7,7 @@ import { notify } from './audit.js';
 import { HttpError } from './http.js';
 
 /**
- * SAHASRA plans bought online with PayU hosted checkout.
+ * SAHAASRA plans bought online with PayU hosted checkout.
  * The customer is sent to PayU's own payment page; PayU posts the result back to us and the plan is
  * extended only after PayU's verify API confirms the payment and its amount.
  */
@@ -69,7 +69,7 @@ export const PAYU_FORM_HOSTS = ['https://secure.payu.in', 'https://test.payu.in'
 export const payuReady = () => !!config.PAYU_KEY && !!config.PAYU_SALT;
 
 function creds() {
-  if (!config.PAYU_KEY || !config.PAYU_SALT) throw new HttpError(503, 'Online payment is not set up on the server yet. Please contact Sahasra support.');
+  if (!config.PAYU_KEY || !config.PAYU_SALT) throw new HttpError(503, 'Online payment is not set up on the server yet. Please contact Sahaasra support.');
   return { key: config.PAYU_KEY, salt: config.PAYU_SALT, hosts: HOSTS[config.PAYU_MODE] };
 }
 

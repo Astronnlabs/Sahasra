@@ -18,7 +18,7 @@ import type { BusinessType } from '@/types';
 const KEY = ['platform', 'referrals'];
 const STATUSES = Object.keys(REFERRAL_STATUS) as ReferralStatus[];
 
-/** Businesses referred by Sahasra customers: call them, onboard them, then reward the referrer. */
+/** Businesses referred by Sahaasra customers: call them, onboard them, then reward the referrer. */
 export function ReferralsPage() {
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({ queryKey: KEY, queryFn: referralsService.platformList, refetchInterval: 30_000 });
@@ -62,10 +62,10 @@ export function ReferralsPage() {
 
   return (
     <>
-      <PageHeader title="Referrals" description={`Businesses referred by Sahasra customers. Each referrer earns ${REFERRAL_REWARD} when their referral joins.`} />
+      <PageHeader title="Referrals" description={`Businesses referred by Sahaasra customers. Each referrer earns ${REFERRAL_REWARD} when their referral joins.`} />
       <div className="stagger mb-5 grid grid-cols-2 gap-4 xl:grid-cols-4">
         <StatCard label="To follow up" value={formatNumber(stats.open)} icon={PhoneCall} loading={isLoading} accent />
-        <StatCard label="Joined Sahasra" value={formatNumber(stats.joined)} icon={UserPlus} loading={isLoading} />
+        <StatCard label="Joined Sahaasra" value={formatNumber(stats.joined)} icon={UserPlus} loading={isLoading} />
         <StatCard label="Rewards to give" value={formatNumber(stats.toReward)} icon={Gift} loading={isLoading} />
         <StatCard label="All referrals" value={formatNumber(stats.total)} icon={Building2} loading={isLoading} />
       </div>
@@ -80,7 +80,7 @@ export function ReferralsPage() {
         filters={[{ id: 'status', label: 'Statuses', options: STATUSES.map((s) => ({ value: s, label: REFERRAL_STATUS[s].label })), predicate: (r, v) => r.status === v }]}
         rowActions={[
           { label: 'Call', icon: Phone, onSelect: (r) => window.open(`tel:${r.phone.replace(/\s/g, '')}`) },
-          { label: 'Message on WhatsApp', icon: MessageCircle, onSelect: (r) => openWhatsApp(r.phone, `Hi ${r.contactName}, this is the Sahasra team. ${r.referrer?.name ?? 'A friend'} told us you might like Sahasra for billing, stock and GST. Can we show you a quick demo?`) },
+          { label: 'Message on WhatsApp', icon: MessageCircle, onSelect: (r) => openWhatsApp(r.phone, `Hi ${r.contactName}, this is the Sahaasra team. ${r.referrer?.name ?? 'A friend'} told us you might like Sahaasra for billing, stock and GST. Can we show you a quick demo?`) },
           { label: 'Mark as talking', icon: PhoneCall, onSelect: mark('contacted'), hidden: (r) => r.status !== 'new' },
           { label: 'Create their business', icon: Building2, onSelect: () => navigate('/superadmin/businesses/new'), hidden: (r) => r.status === 'rewarded' || r.status === 'declined' },
           { label: 'Mark as joined', icon: UserPlus, onSelect: mark('joined'), hidden: (r) => r.status === 'joined' || r.status === 'rewarded' },

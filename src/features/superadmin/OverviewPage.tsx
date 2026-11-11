@@ -39,7 +39,7 @@ export function OverviewPage() {
     <>
       <PageHeader
         title="Platform overview"
-        description="Every business on Sahasra, at a glance."
+        description="Every business on Sahaasra, at a glance."
         actions={
           <>
             <Button variant="secondary" asChild><Link to="/superadmin/support"><Headset /> Support inbox</Link></Button>

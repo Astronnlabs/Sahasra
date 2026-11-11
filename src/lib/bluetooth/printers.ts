@@ -4,7 +4,7 @@ import type { PrinterEncoding } from '@/lib/escpos/encoding';
 import type { Density } from '@/lib/escpos/raster';
 import type { ReceiptOptions } from '@/lib/escpos/receipt';
 import { bytesToBase64, inNativeApp, nativeCall, NativeError, onNativeEvent, type NativeDevice } from './native';
-import { chooseWebBleDevice, rememberedWebBleDevice, WebBleConnection, webBleSupported, type BtDevice } from './webBle';
+import { chooseWebBleDevice, rememberedWebBleDevice, WebBleConnection, webBleRemembers, webBleSupported, type BtDevice } from './webBle';
 
 /**
  * Bluetooth receipt printers saved on THIS device (phone, tablet or computer). Like the
@@ -24,6 +24,8 @@ export interface SavedPrinter {
   address?: string;
   /** Chrome: the browser's id for the device. */
   webId?: string;
+  /** Chrome: the printer's printing service, so the reconnect window lists only this printer. */
+  webService?: string;
   paper: 58 | 80;
   /** Printable dots per line (58 mm: 384; 80 mm: 576, some models 512). */
   dots: number;
@@ -228,20 +230,34 @@ async function tryReconnect(id: string) {
       needsTap.add(id);
       // Chrome only lets a website reconnect after a page reload once the user taps (its rule).
       toast(`Reconnect ${p.name}?`, {
-        description: 'Chrome needs one tap after the page is reloaded. (The SAHAASRA Android app reconnects by itself.)',
+        description: webBleRemembers()
+          ? 'Tap Reconnect once — Chrome will remember it from now on.'
+          : 'Chrome asks once after a refresh: tap Reconnect, then your printer, then Pair. To skip this, turn on the Chrome setting shown in Settings → Printer.',
         duration: 30000,
         action: {
           label: 'Reconnect',
           onClick: () => {
-            reselectWebPrinter(id).then(
-              () => toast.success(`${p.name} connected`),
-              (err) => toast.error(err instanceof Error ? err.message : 'Could not connect.'),
-            );
+            reconnectWithTap(id);
           },
         },
       });
     }
   }
+}
+
+/** Reconnect button (Chrome after a reload): Chrome's window shows only this printer — tap it, then Pair. */
+export function reconnectWithTap(id: string, showAll = false) {
+  const p = getPrinter(id);
+  if (!p) return;
+  reselectWebPrinter(id, showAll).then(
+    () => toast.success(`${p.name} connected`),
+    (err) => {
+      if (!showAll && err instanceof Error && /No printer was chosen/.test(err.message)) {
+        // The printer wasn't in the short list (some printers don't announce their service).
+        toast('Printer not in the list?', { description: 'Show every nearby Bluetooth device instead.', action: { label: 'Show all', onClick: () => reconnectWithTap(id, true) }, duration: 15000 });
+      } else toast.error(err instanceof Error ? err.message : 'Could not connect.');
+    },
+  );
 }
 
 let watcher: ReturnType<typeof setInterval> | null = null;
@@ -302,6 +318,7 @@ export function connectPrinter(id: string, opts: { quiet?: boolean } = {}): Prom
             webConns.set(id, conn);
           }
           await conn.connect();
+          if (conn.service && conn.service !== p.webService) updatePrinter(id, { webService: conn.service });
         }
       } else {
         wireNative();
@@ -440,10 +457,13 @@ export async function addWebPrinter(paper: 58 | 80) {
 }
 
 /** Chrome after a page reload: the user taps Connect and picks the same printer again. */
-export async function reselectWebPrinter(id: string) {
-  const device = await chooseWebBleDevice();
+export async function reselectWebPrinter(id: string, showAll = false) {
   const p = getPrinter(id);
   if (!p) return;
+  // Chrome's window lists just this printer (by its printing service / name) so it's one tap.
+  const named = p.name && p.name !== 'Bluetooth printer' ? p.name : undefined;
+  const only = !showAll && (p.webService || named) ? { service: p.webService, name: named } : undefined;
+  const device = await chooseWebBleDevice(only);
   webConns.get(id)?.disconnect();
   webConns.delete(id);
   webDevices.set(id, device);

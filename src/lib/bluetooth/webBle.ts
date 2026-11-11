@@ -26,6 +26,8 @@ export interface BtDevice extends EventTarget {
   id: string;
   name?: string;
   gatt?: BtServer;
+  /** Chrome: start listening for the device's broadcasts (needed before reconnecting after a reload). */
+  watchAdvertisements?(o?: { signal?: AbortSignal }): Promise<void>;
 }
 interface BluetoothApi {
   getAvailability?(): Promise<boolean>;
@@ -73,12 +75,19 @@ export async function webBleAvailable() {
 
 export class WebBleError extends Error {}
 
-/** Opens Chrome's device chooser (must be called from a tap). */
-export async function chooseWebBleDevice(): Promise<BtDevice> {
+/**
+ * Opens Chrome's device chooser (must be called from a tap). With `only`, the list shows just
+ * the saved printer (matched by its printing service and name) instead of every nearby device.
+ */
+export async function chooseWebBleDevice(only?: { service?: string; name?: string }): Promise<BtDevice> {
   const b = bt();
   if (!b) throw new WebBleError('This browser cannot use Bluetooth. Use Chrome, or the SAHAASRA Android app.');
+  const filters = [
+    ...(only?.service ? [{ services: [only.service] }] : []),
+    ...(only?.name ? [{ name: only.name }] : []),
+  ];
   try {
-    return await b.requestDevice({ acceptAllDevices: true, optionalServices: PRINTER_SERVICES });
+    return await b.requestDevice(filters.length ? { filters, optionalServices: PRINTER_SERVICES } : { acceptAllDevices: true, optionalServices: PRINTER_SERVICES });
   } catch (e) {
     if (e instanceof DOMException && e.name === 'NotFoundError') throw new WebBleError('No printer was chosen.');
     if (e instanceof DOMException && e.name === 'SecurityError') throw new WebBleError('Bluetooth is blocked for this site. Allow it in the browser’s site settings.');
@@ -102,6 +111,27 @@ export class WebBleConnection {
   private char: BtCharacteristic | null = null;
   private closedByUs = false;
   onDisconnect: (() => void) | null = null;
+  /** The printing service in use (saved, so the chooser can later show just this printer). */
+  service: string | null = null;
+
+  /** Waits (up to 10 s) for the printer's broadcast. False when the browser can't watch for it. */
+  private async waitUntilSeen() {
+    const d = this.device;
+    if (!d.watchAdvertisements) return false;
+    const stop = new AbortController();
+    try {
+      const seen = new Promise<boolean>((resolve) => {
+        d.addEventListener('advertisementreceived', () => resolve(true), { once: true });
+        setTimeout(() => resolve(false), 10000);
+      });
+      await d.watchAdvertisements({ signal: stop.signal });
+      return await seen;
+    } catch {
+      return false;
+    } finally {
+      stop.abort();
+    }
+  }
 
   constructor(readonly device: BtDevice) {
     device.addEventListener('gattserverdisconnected', () => {
@@ -123,7 +153,13 @@ export class WebBleConnection {
     try {
       server = await withTimeout(gatt.connect(), 15000, 'The printer did not answer. Check it is switched on and nearby.');
     } catch (e) {
-      throw e instanceof WebBleError ? e : new WebBleError('Could not connect. Check the printer is switched on, nearby and not connected to another phone.');
+      // After a page reload Chrome has to see the printer broadcasting before it can reconnect.
+      if (!(await this.waitUntilSeen())) throw e instanceof WebBleError ? e : new WebBleError('Could not connect. Check the printer is switched on, nearby and not connected to another phone.');
+      try {
+        server = await withTimeout(gatt.connect(), 15000, 'The printer did not answer. Check it is switched on and nearby.');
+      } catch (e2) {
+        throw e2 instanceof WebBleError ? e2 : new WebBleError('Could not connect. Check the printer is switched on, nearby and not connected to another phone.');
+      }
     }
     let services: BtService[] = [];
     try {
@@ -136,6 +172,7 @@ export class WebBleConnection {
       for (const c of await s.getCharacteristics().catch(() => [] as BtCharacteristic[])) {
         if (c.properties.write || c.properties.writeWithoutResponse) {
           this.char = c;
+          this.service = s.uuid;
           return;
         }
       }

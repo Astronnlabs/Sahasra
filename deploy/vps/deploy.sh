@@ -12,8 +12,14 @@ as_app git -C $APP log --oneline -1
 
 echo "== build web app"
 cd $APP
+# Keep the previous version's screen files for 14 days, so tabs opened before this update still work.
+KEEP=/srv/sahaasra/shared/previous-assets
+as_app mkdir -p $KEEP
+[ -d $APP/dist/assets ] && as_app cp -n $APP/dist/assets/* $KEEP/ 2>/dev/null || true
 as_app npm ci --include=dev --no-audit --no-fund --loglevel=error
 as_app npm run build --silent
+as_app cp -n $KEEP/* $APP/dist/assets/ 2>/dev/null || true
+find $KEEP -type f -mtime +14 -delete
 
 echo "== build server"
 cd $APP/backend

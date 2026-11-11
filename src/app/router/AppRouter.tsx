@@ -2,11 +2,20 @@ import { lazy, Suspense, type ComponentType } from 'react';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import { FullScreenLoader } from '@/components/feedback/PageSkeleton';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { isChunkLoadError, reloadForNewVersion } from '@/lib/reloadForNewVersion';
 import { GuestRoute, PlanRoute, ProtectedRoute, SuperAdminRoute } from './ProtectedRoute';
 
 /** Route-level code splitting for named page exports. */
 const page = <T extends Record<string, unknown>>(loader: () => Promise<T>, name: keyof T) =>
-  lazy(async () => ({ default: (await loader())[name] as ComponentType }));
+  lazy(async () => {
+    try {
+      return { default: (await loader())[name] as ComponentType };
+    } catch (e) {
+      // The app was updated since this page loaded: fetch the new version (once) instead of failing.
+      if (isChunkLoadError(e) && reloadForNewVersion()) return new Promise<never>(() => {});
+      throw e;
+    }
+  });
 
 const LoginPage = page(() => import('@/features/auth/LoginPage'), 'LoginPage');
 const SetupPage = page(() => import('@/features/auth/SetupPage'), 'SetupPage');

@@ -83,8 +83,16 @@ export function createApp() {
   // In production the API also serves the built web app.
   const webDist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../dist');
   if (config.isProd && fs.existsSync(webDist)) {
+    // Built files carry a hash in their name, so they never change and can be cached for good.
+    app.use('/assets', express.static(path.join(webDist, 'assets'), { immutable: true, maxAge: '1y', fallthrough: true }));
+    // A missing build file is a real 404: answering with the app page would break the browser's module loading.
+    app.use('/assets', (_req, res) => res.status(404).type('text/plain').send('Not found'));
     app.use(express.static(webDist, { index: false, maxAge: '1h' }));
-    app.get('/{*splat}', (_req, res) => res.sendFile(path.join(webDist, 'index.html')));
+    // The app page is always checked with the server, so a new version is picked up straight away.
+    app.get('/{*splat}', (_req, res) => {
+      res.setHeader('Cache-Control', 'no-cache');
+      res.sendFile(path.join(webDist, 'index.html'));
+    });
   }
 
   app.use(errorHandler);

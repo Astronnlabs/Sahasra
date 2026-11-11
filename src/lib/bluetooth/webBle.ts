@@ -53,6 +53,14 @@ const PRINTER_SERVICES = [
 
 export const webBleSupported = () => !!bt();
 
+/**
+ * Whether Chrome remembers chosen printers across page reloads (getDevices). It is off by default
+ * and turned on with chrome://flags/#enable-web-bluetooth-new-permissions-backend; with it,
+ * printers reconnect by themselves after a refresh.
+ */
+export const webBleRemembers = () => typeof bt()?.getDevices === 'function';
+export const CHROME_BT_FLAG = 'chrome://flags/#enable-web-bluetooth-new-permissions-backend';
+
 export async function webBleAvailable() {
   const b = bt();
   if (!b) return false;

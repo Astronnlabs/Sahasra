@@ -1,4 +1,4 @@
-import { Bluetooth, BluetoothSearching, Download, Loader2, Plus, Printer, RefreshCw, Settings2, Smartphone, Trash2, Unplug } from 'lucide-react';
+import { Bluetooth, BluetoothSearching, Copy, Download, Loader2, Plus, Printer, RefreshCw, Settings2, Smartphone, Trash2, Unplug } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,7 @@ import {
   type ConnState,
   type SavedPrinter,
 } from '@/lib/bluetooth/printers';
+import { CHROME_BT_FLAG, webBleRemembers } from '@/lib/bluetooth/webBle';
 import { ENCODINGS, type PrinterEncoding } from '@/lib/escpos/encoding';
 import { testPageToEscPos } from '@/lib/escpos/receipt';
 import { bluetoothChoice, isMobileDevice, SAHAASRA_ANDROID_APP, savePrinterSettings, type PrinterSettings, type PrintJob } from '@/lib/printer';
@@ -134,6 +135,8 @@ export function BluetoothPrinters({ settings, hasKot, computerConnected }: { set
         </div>
       )}
 
+      {mode === 'web' && !webBleRemembers() && printers.some((p) => p.protocol === 'web-le') && <ChromeReconnectTip />}
+
       {printers.length > 0 ? (
         <ul className="divide-y divide-border">
           {printers.map((p) => {
@@ -219,6 +222,36 @@ export function BluetoothPrinters({ settings, hasKot, computerConnected }: { set
           }}
         />
       )}
+    </div>
+  );
+}
+
+/** Chrome forgets Bluetooth printers on refresh unless one setting is turned on. */
+function ChromeReconnectTip() {
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(CHROME_BT_FLAG);
+      toast.success('Copied — paste it in Chrome’s address bar');
+    } catch {
+      toast.info(CHROME_BT_FLAG);
+    }
+  };
+  return (
+    <div className="space-y-2 border-b border-border bg-warning-soft/60 px-4 py-3 text-xs">
+      <p className="text-[13px] font-semibold">Reconnect by itself after refreshing the page</p>
+      <p className="text-muted-foreground">
+        Chrome forgets Bluetooth printers when the page is refreshed, so it asks for one tap. To make it reconnect automatically, turn on one Chrome setting (once per
+        computer/phone):
+      </p>
+      <ol className="list-decimal space-y-0.5 pl-5 text-muted-foreground">
+        <li>Copy this address and paste it in Chrome’s address bar: <code className="break-all rounded bg-card px-1 py-0.5 text-foreground">{CHROME_BT_FLAG}</code></li>
+        <li>Set <b className="text-foreground">Use the new permissions backend for Web Bluetooth</b> to <b className="text-foreground">Enabled</b>, then press <b className="text-foreground">Relaunch</b>.</li>
+        <li>Come back here and press <b className="text-foreground">Connect</b> once. After that the printer reconnects on every refresh.</li>
+      </ol>
+      <Button size="sm" variant="secondary" onClick={copy}>
+        <Copy /> Copy address
+      </Button>
+      {isAndroid() && <p className="text-muted-foreground">On Android phones the SAHAASRA app reconnects by itself without this setting.</p>}
     </div>
   );
 }

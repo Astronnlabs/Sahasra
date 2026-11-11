@@ -89,7 +89,7 @@ export function checkoutForm(i: { txnid: string; amount: string; productinfo: st
     amount: i.amount,
     productinfo: clean(i.productinfo, 100),
     firstname: clean(i.firstname, 60) || 'Customer',
-    email: clean(i.email, 80) || 'billing@sahasra.in',
+    email: clean(i.email, 80) || 'astronnlabs@gmail.com',
     phone: i.phone.replace(/\D/g, '').slice(-10),
     udf1: i.tenantId,
     udf2: '',

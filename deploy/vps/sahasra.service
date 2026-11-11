@@ -1,0 +1,22 @@
+[Unit]
+Description=SAHASRA billing software
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+User=sahasra
+Group=sahasra
+WorkingDirectory=/srv/sahasra/app/backend
+EnvironmentFile=/srv/sahasra/shared/.env
+ExecStart=/usr/bin/node dist/index.js
+Restart=always
+RestartSec=3
+# Hardening: the app can only write to its uploads folder.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/sahasra/shared/uploads
+
+[Install]
+WantedBy=multi-user.target

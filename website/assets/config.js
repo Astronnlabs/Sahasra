@@ -7,13 +7,13 @@
  *        (backend/src/lib/subscription.ts), which is what customers are actually charged.
  */
 window.SAHASRA = {
-  APP_URL: 'https://sahasra-s9o9.onrender.com',
+  APP_URL: 'https://app.sahaasra.in',
 
   COMPANY: {
     legalName: 'SAHASRA',
     address: 'Add your registered address here',
-    email: 'support@sahasra.in',
-    phone: '+91 00000 00000',
+    email: 'astronnlabs@gmail.com',
+    phone: '+91 62908 54388',
     gstin: '',
   },
 

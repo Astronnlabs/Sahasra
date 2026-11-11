@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { useBluetoothPrinters, type ConnState, type PrinterConn, type SavedPrinter } from '@/lib/bluetooth/printers';
 
 /**
  * Printer setup for THIS computer (each counter has its own printer), kept in the browser.
@@ -10,7 +11,10 @@ import { useEffect, useState } from 'react';
 export type PrintJob = 'bill' | 'kot';
 
 export interface JobPrinter {
-  /** Printer name as Windows knows it ('' = the computer's default printer). */
+  /**
+   * Printer name as Windows knows it ('' = the computer's default printer, or the print window),
+   * or `bt:<id>` for a Bluetooth printer saved on this device.
+   */
   printer: string;
   copies: number;
   /** Bill: print as soon as a payment is confirmed. KOT: print as soon as it is sent to the kitchen. */
@@ -19,10 +23,17 @@ export interface JobPrinter {
 
 export type PrinterSettings = Record<PrintJob, JobPrinter>;
 
+const BT = 'bt:';
+/** The saved Bluetooth printer chosen for a job, or null for computer printers / the print window. */
+export const bluetoothIdOf = (printer: string) => (printer.startsWith(BT) ? printer.slice(BT.length) : null);
+export const bluetoothChoice = (id: string) => `${BT}${id}`;
+
 const KEY = 'sahaasra:printer';
 const EVENT = 'sahaasra:printer-settings';
 const SERVICE_URL = 'http://127.0.0.1:17777';
 export const SAHAASRA_PRINTER_DOWNLOAD = '/downloads/SahasraPrinter.exe';
+/** The SAHAASRA Android app (Bluetooth printing on phones and tablets). */
+export const SAHAASRA_ANDROID_APP = '/downloads/android/SAHAASRA.apk';
 const DEFAULTS: PrinterSettings = { bill: { printer: '', copies: 1, auto: false }, kot: { printer: '', copies: 1, auto: true } };
 
 const clean = (j: Partial<JobPrinter> | undefined, d: JobPrinter): JobPrinter => ({
@@ -155,24 +166,52 @@ export function printerMessage(connected: boolean, printer: LocalPrinter | null,
   return `${printer.name} — ${printer.virtual && isPrintable(printer.status) ? 'not a paper printer' : PRINTER_STATE_LABEL[printer.status]}`;
 }
 
-/** Live printer status for this computer (checked every 30 seconds). */
+const BT_LEVEL: Record<ConnState, PrinterLevel> = { connected: 'ok', printing: 'ok', connecting: 'warn', disconnected: 'warn', error: 'error' };
+
+/** Status line for a Bluetooth printer chosen for a job. */
+export function bluetoothStatus(id: string, printers: SavedPrinter[], conns: Record<string, PrinterConn>): { level: PrinterLevel; message: string } {
+  const p = printers.find((x) => x.id === id);
+  if (!p) return { level: 'error', message: 'Bluetooth printer removed — choose another' };
+  const c = conns[id] ?? { state: 'disconnected' as const };
+  const text: Record<ConnState, string> = {
+    connected: 'Connected',
+    printing: 'Printing…',
+    connecting: 'Connecting…',
+    disconnected: c.message ?? 'Not connected — connects when printing',
+    error: c.message ?? 'Not connected',
+  };
+  return { level: BT_LEVEL[c.state], message: `${p.name} (Bluetooth) — ${text[c.state]}` };
+}
+
+/** Live printer status for this device (computer printers are checked every 30 seconds). */
 export function usePrinterStatus(job: PrintJob = 'bill') {
   const all = usePrinterSettings();
   const settings = all[job];
+  const bt = useBluetoothPrinters();
+  // Phones never have the Windows printer service, so there is nothing to check there.
+  const mobile = isMobileDevice();
   const q = useQuery({
     queryKey: PRINTER_STATUS_KEY,
     // "null" = no printer service on this computer (bills use the print window).
     queryFn: () => localPrinters().catch((e) => (e instanceof NoPrinterService ? null : Promise.reject(e))),
-    refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
+    refetchInterval: mobile ? false : 30_000,
+    refetchOnWindowFocus: !mobile,
     retry: false,
     staleTime: 10_000,
   });
   const printers = q.data ?? [];
   const connected = q.data !== null && q.data !== undefined;
-  const find = (name: string) => (connected ? (printers.find((p) => (name ? p.name === name : p.isDefault)) ?? null) : null);
+  const find = (name: string) => (connected && !bluetoothIdOf(name) ? (printers.find((p) => (name ? p.name === name : p.isDefault)) ?? null) : null);
   const printer = find(settings.printer);
-  const level: PrinterLevel = q.isLoading ? 'unknown' : printerLevel(connected, printer);
-  const message = q.isLoading ? 'Checking printer…' : printerMessage(connected, printer, settings.printer);
-  return { all, settings, connected, printers, printer, find, level, message, refresh: q.refetch, isFetching: q.isFetching, isLoading: q.isLoading };
+  /** Green / amber / red and a message for the printer chosen for a job. */
+  const jobStatus = (j: PrintJob): { level: PrinterLevel; message: string } => {
+    const choice = all[j].printer;
+    const btId = bluetoothIdOf(choice);
+    if (btId) return bluetoothStatus(btId, bt.printers, bt.conns);
+    if (q.isLoading) return { level: 'unknown', message: 'Checking printer…' };
+    const p = find(choice);
+    return { level: printerLevel(connected, p), message: printerMessage(connected, p, choice) };
+  };
+  const { level, message } = jobStatus(job);
+  return { all, settings, connected, printers, printer, find, jobStatus, level, message, bluetooth: bt, refresh: q.refetch, isFetching: q.isFetching, isLoading: q.isLoading };
 }

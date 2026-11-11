@@ -18,6 +18,7 @@ import { industryRouter } from './routes/industry.js';
 import { jobsRouter } from './routes/jobs.js';
 import { peopleRouter } from './routes/people.js';
 import { platformRouter } from './routes/platform.js';
+import { printJobsRouter } from './routes/printJobs.js';
 import { referralsRouter } from './routes/referrals.js';
 import { importMoreRouter } from './routes/importMore.js';
 import { transactionsRouter } from './routes/transactions.js';
@@ -75,10 +76,27 @@ export function createApp() {
   api.use(adminRouter);
   api.use(analyticsRouter);
   api.use(ebillingRouter);
+  api.use(printJobsRouter);
   api.use(() => {
     throw notFound('API route');
   });
   app.use('/api', api);
+
+  // The Android app (Bluetooth printing), built on the server by deploy/vps/build-android.sh.
+  const androidDir = process.env.ANDROID_DOWNLOADS_DIR || '/srv/sahaasra/shared/downloads/android';
+  app.get(['/downloads/android/SAHAASRA.apk', '/downloads/android/version.json'], (req, res) => {
+    const file = path.join(androidDir, path.basename(req.path));
+    if (!fs.existsSync(file)) {
+      res.status(404).type('text/plain').send('The Android app is not available yet.');
+      return;
+    }
+    res.setHeader('Cache-Control', 'no-cache');
+    if (file.endsWith('.apk')) {
+      res.type('application/vnd.android.package-archive');
+      res.setHeader('Content-Disposition', 'attachment; filename="SAHAASRA.apk"');
+    }
+    res.sendFile(file);
+  });
 
   // In production the API also serves the built web app.
   const webDist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../dist');

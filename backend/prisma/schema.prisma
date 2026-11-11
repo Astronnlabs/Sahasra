@@ -102,6 +102,7 @@ model Tenant {
   vaahakLink       VaahakLink?
   billMessages     BillMessage[]
   planPayments     PlanPayment[]
+  printJobs        PrintJob[]
 
   @@index([status])
   @@index([createdAt])
@@ -977,6 +978,35 @@ model PlanPayment {
   userId    String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  @@index([tenantId, createdAt])
+}
+// ════════ Printing ════════
+
+/// One print of a bill or KOT on a Bluetooth or computer printer (history only).
+/// Printers themselves are set up on each device and never stored here; no customer details are kept.
+model PrintJob {
+  /// Id made on the device, so the same print is never recorded twice.
+  id         String    @id
+  tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId     String?
+  /// bill | kot
+  kind       String
+  /// Invoice or KOT number.
+  reference  String
+  printer    String
+  /// bluetooth-classic | bluetooth-le | windows
+  connection String
+  device     String    @default("")
+  copies     Int       @default(1)
+  /// printed | failed | cancelled | interrupted
+  status     String
+  error      String?
+  reprint    Boolean   @default(false)
+  createdAt  DateTime
+  finishedAt DateTime?
+  syncedAt   DateTime  @default(now())
 
   @@index([tenantId, createdAt])
 }

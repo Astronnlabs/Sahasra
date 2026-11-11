@@ -1,4 +1,4 @@
-import { Banknote, Building2, CheckCircle2, CreditCard, Download, HandCoins, MessageCircle, Plus, Printer, Smartphone, Split, Trash2, type LucideIcon } from 'lucide-react';
+import { Banknote, Building2, CheckCircle2, CreditCard, Download, HandCoins, MessageCircle, Plus, Printer, RotateCcw, Share2, Smartphone, Split, Trash2, X, type LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useWorkspace } from '@/app/providers/WorkspaceProvider';
@@ -9,6 +9,7 @@ import { Input, NativeSelect } from '@/components/ui/input';
 import { useInvoicePrinter } from '@/features/sales/useInvoicePrinter';
 import { formatINR } from '@/lib/format';
 import { getPrinterSettings } from '@/lib/printer';
+import { cancelPrintJob, usePrintJobs, type ActiveJob, type LocalPrintJob } from '@/lib/printJobs';
 import { openWhatsApp } from '@/lib/share';
 import { cn } from '@/lib/utils';
 import type { PaymentMethod, Sale } from '@/types';
@@ -22,6 +23,32 @@ const METHODS: { id: PaymentMethod; label: string; icon: LucideIcon }[] = [
   { id: 'credit', label: 'Credit', icon: HandCoins },
   { id: 'split', label: 'Split Payment', icon: Split },
 ];
+
+/** Where the bill's Bluetooth print has got to. */
+function PrintJobStatus({ job, sending }: { job: LocalPrintJob; sending: ActiveJob | null }) {
+  const pct = sending && sending.total ? Math.round((sending.sent / sending.total) * 100) : 0;
+  if (job.status === 'queued' || job.status === 'sending') {
+    return (
+      <div className="mt-2 flex w-full items-center gap-3 rounded-xl bg-primary-soft px-3 py-2 text-left">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-medium">
+            {sending ? `Printing on ${job.printer} · ${pct}%` : `Preparing for ${job.printer}…`}
+          </p>
+          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-card">
+            <div className="h-full rounded-full bg-primary transition-[width] duration-200" style={{ width: `${Math.max(pct, 4)}%` }} />
+          </div>
+        </div>
+        <Button size="sm" variant="ghost" onClick={() => cancelPrintJob(job.id)}>
+          <X /> Cancel
+        </Button>
+      </div>
+    );
+  }
+  const tone = job.status === 'printed' ? 'text-success' : job.status === 'cancelled' ? 'text-muted-foreground' : 'text-danger';
+  const text =
+    job.status === 'printed' ? `Printed on ${job.printer}${job.reprint ? ' (reprint)' : ''}` : job.status === 'cancelled' ? 'Printing cancelled' : `Didn’t print: ${job.error ?? 'printer error'}`;
+  return <p className={cn('mt-2 w-full text-xs font-medium', tone)}>{text}</p>;
+}
 
 interface SplitRow {
   id: number;
@@ -48,6 +75,9 @@ export function PaymentModal({ open, onOpenChange, total, customer, onComplete, 
   const { settings, businessName } = useWorkspace();
   const upiId = typeof settings.upiId === 'string' ? settings.upiId : '';
   const printer = useInvoicePrinter();
+  const { jobs, active } = usePrintJobs();
+  // The latest Bluetooth print of this bill (printing status, cancel, print again).
+  const printJob = completed ? jobs.find((j) => j.kind === 'bill' && j.reference === completed.invoiceNo) : undefined;
 
   useEffect(() => {
     if (open) {
@@ -99,12 +129,22 @@ export function PaymentModal({ open, onOpenChange, total, customer, onComplete, 
           {change > 0 && (
             <p className="mt-3 rounded-lg bg-warning-soft px-3 py-1.5 text-[13px] font-medium">Return change: {formatINR(change)}</p>
           )}
-          <div className="mt-6 grid w-full grid-cols-3 gap-2">
-            <Button variant="secondary" loading={printer.printing} onClick={() => printer.print(completed)}>
-              <Printer /> Print
-            </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            className="mt-6 h-12 w-full text-[15px]"
+            loading={printer.printing || printJob?.status === 'queued' || printJob?.status === 'sending'}
+            onClick={() => (printJob ? printer.printAgain(completed) : printer.print(completed))}
+          >
+            <Printer /> {printJob ? 'Print again' : 'Print receipt'}
+          </Button>
+          {printJob && <PrintJobStatus job={printJob} sending={active?.id === printJob.id ? active : null} />}
+          <div className="mt-2 grid w-full grid-cols-3 gap-2">
             <Button variant="secondary" loading={printer.downloading} onClick={() => printer.download(completed)}>
               <Download /> PDF
+            </Button>
+            <Button variant="secondary" loading={printer.sharing} onClick={() => printer.share(completed)}>
+              <Share2 /> Share
             </Button>
             <Button
               variant="secondary"
@@ -122,7 +162,8 @@ export function PaymentModal({ open, onOpenChange, total, customer, onComplete, 
             <div className="mt-3 w-full rounded-xl bg-danger-soft px-3 py-2.5 text-left text-[13px]">
               <p className="font-medium text-danger">Bill didn’t print: {printer.failed.message}</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <Button size="sm" onClick={() => printer.printWithDialog(printer.failed!.sale)}><Printer /> Print with print window</Button>
+                <Button size="sm" onClick={() => printer.print(printer.failed!.sale)}><RotateCcw /> Try again</Button>
+                <Button size="sm" variant="secondary" onClick={() => printer.printWithDialog(printer.failed!.sale)}><Printer /> Print window</Button>
                 <Button size="sm" variant="secondary" asChild><Link to="/settings?section=printer">Printer settings</Link></Button>
               </div>
             </div>

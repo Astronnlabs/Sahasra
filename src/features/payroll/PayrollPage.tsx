@@ -20,7 +20,7 @@ import { Input, NativeSelect } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from '@/components/ui/toast';
+import { printHtml } from '@/lib/share';
 import { useWorkspace } from '@/app/providers/WorkspaceProvider';
 import { qk, useAppMutation, useEmployees } from '@/hooks/queries';
 import { formatDate, formatINR } from '@/lib/format';
@@ -32,20 +32,16 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 
 /** Opens a printable payslip (the browser's print dialog can save it as PDF). */
 function printPayslip(p: PayrollEntry, period: string, business: string) {
-  const w = window.open('', '_blank', 'width=720,height=900');
-  if (!w) {
-    toast.error('Allow pop-ups to print payslips.');
-    return;
-  }
   const row = (label: string, value: number, minus = false) => `<tr><td>${esc(label)}</td><td style="text-align:right">${minus ? '− ' : ''}${esc(formatINR(value))}</td></tr>`;
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Payslip ${esc(p.name)} ${esc(period)}</title>
-<style>body{font-family:system-ui,sans-serif;color:#171522;padding:32px;max-width:640px;margin:auto}h1{font-size:20px;margin:0}table{width:100%;border-collapse:collapse;margin-top:16px}td{padding:8px 0;border-bottom:1px solid #eee;font-size:14px}.net{font-size:22px;font-weight:700;color:#6D3DE8}.muted{color:#6F6B78;font-size:13px}</style></head>
-<body><h1>${esc(business || 'Payslip')}</h1><p class="muted">Payslip for ${esc(period)}</p>
+  // Printed from this page (no pop-up), so it also works on phones and in the Android app.
+  printHtml(
+    `<h1>${esc(business || 'Payslip')}</h1><p class="muted">Payslip for ${esc(period)}</p>
 <p><b>${esc(p.name)}</b><br><span class="muted">${esc(p.designation)}</span></p>
 <table>${row('Gross salary', p.gross)}${row('Allowances', p.allowances)}${row('Overtime', p.overtime)}${row('Commission', p.commission)}${row('PF & professional tax', p.deductions, true)}${row('Advance recovery', p.advance, true)}</table>
-<p class="muted" style="margin-top:20px">Net salary</p><p class="net">${esc(formatINR(p.net))}</p>
-<script>window.onload=function(){window.print()}</script></body></html>`);
-  w.document.close();
+<p class="muted" style="margin-top:20px">Net salary</p><p class="net">${esc(formatINR(p.net))}</p>`,
+    '.print-doc{font-family:system-ui,sans-serif;color:#171522;padding:32px;max-width:640px;margin:auto;background:#fff}.print-doc h1{font-size:20px;margin:0}.print-doc table{width:100%;border-collapse:collapse;margin-top:16px}.print-doc td{padding:8px 0;border-bottom:1px solid #eee;font-size:14px}.print-doc .net{font-size:22px;font-weight:700;color:#6D3DE8}.print-doc .muted{color:#6F6B78;font-size:13px}',
+    `Payslip ${p.name} ${period}`,
+  );
 }
 
 function AdvanceModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {

@@ -7,20 +7,25 @@ import { NativeSelect } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useKotPrinter } from '@/features/restaurant/useKotPrinter';
 import { useInvoicePrinter } from '@/features/sales/useInvoicePrinter';
+import type { SavedPrinter } from '@/lib/bluetooth/printers';
 import {
+  bluetoothChoice,
+  bluetoothIdOf,
+  isMobileDevice,
   isPrintable,
   PRINTER_STATE_LABEL,
-  printerLevel,
-  printerMessage,
   SAHAASRA_PRINTER_DOWNLOAD,
   savePrinterSettings,
   usePrinterStatus,
   type JobPrinter,
   type LocalPrinter,
+  type PrinterLevel,
   type PrintJob,
 } from '@/lib/printer';
 import { cn } from '@/lib/utils';
 import type { BusinessType, Kot, Sale } from '@/types';
+import { BluetoothPrinters } from './BluetoothPrinters';
+import { PrintHistory } from './PrintHistory';
 import { Section } from './SettingsSections';
 
 /** Businesses that send kitchen order tickets. */
@@ -58,6 +63,8 @@ function JobCard({
   find,
   onTest,
   testing,
+  btPrinters,
+  status,
 }: {
   icon: ReactNode;
   title: string;
@@ -69,10 +76,14 @@ function JobCard({
   find: (name: string) => LocalPrinter | null;
   onTest: () => void;
   testing: boolean;
+  btPrinters: SavedPrinter[];
+  status: { level: PrinterLevel; message: string };
 }) {
-  const printer = find(value.printer);
-  const level = printerLevel(connected, printer);
+  void find;
+  const { level } = status;
   const defaultName = printers.find((p) => p.isDefault)?.name;
+  const btId = bluetoothIdOf(value.printer);
+  const usable = connected || btPrinters.length > 0;
   return (
     <div className="rounded-xl border border-border">
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
@@ -80,7 +91,7 @@ function JobCard({
         <div className="min-w-0 flex-1">
           <p className="text-[13px] font-semibold">{title}</p>
           <p className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
-            <span className={cn('h-2 w-2 shrink-0 rounded-full', DOT[level])} /> {printerMessage(connected, printer, value.printer)}
+            <span className={cn('h-2 w-2 shrink-0 rounded-full', DOT[level])} /> {status.message}
           </p>
         </div>
         <Button variant="secondary" size="sm" onClick={onTest} loading={testing}><Printer /> Test</Button>
@@ -89,18 +100,26 @@ function JobCard({
         <div className="grid gap-3 sm:grid-cols-[1fr_110px]">
           <label className="block">
             <span className="mb-1.5 block text-xs font-medium">Printer</span>
-            <NativeSelect value={connected ? value.printer : ''} disabled={!connected} onChange={(e) => onChange({ printer: e.target.value })}>
-              {connected ? (
-                <>
-                  <option value="">Computer’s default{defaultName ? ` (${defaultName})` : ''}</option>
+            <NativeSelect value={usable || btId ? value.printer : ''} disabled={!usable && !btId} onChange={(e) => onChange({ printer: e.target.value })}>
+              <option value="">{connected ? `Computer’s default${defaultName ? ` (${defaultName})` : ''}` : 'Print window — choose each time'}</option>
+              {btPrinters.length > 0 && (
+                <optgroup label="Bluetooth printers">
+                  {btPrinters.map((p) => (
+                    <option key={p.id} value={bluetoothChoice(p.id)}>
+                      {p.name} (Bluetooth, {p.paper} mm)
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {btId && !btPrinters.some((p) => p.id === btId) && <option value={value.printer}>Removed Bluetooth printer</option>}
+              {connected && (
+                <optgroup label="This computer">
                   {printers.map((p) => (
                     <option key={p.name} value={p.name}>{p.name}{p.virtual ? ' (not paper)' : ''}</option>
                   ))}
-                  {value.printer && !printers.some((p) => p.name === value.printer) && <option value={value.printer}>{value.printer} (not connected)</option>}
-                </>
-              ) : (
-                <option value="">Print window — choose each time</option>
+                </optgroup>
               )}
+              {connected && value.printer && !btId && !printers.some((p) => p.name === value.printer) && <option value={value.printer}>{value.printer} (not connected)</option>}
             </NativeSelect>
           </label>
           <label className="block">
@@ -128,11 +147,15 @@ export function PrinterSettings() {
   const hasKot = KOT_BUSINESSES.includes(businessType);
   const set = (job: PrintJob, patch: Partial<JobPrinter>) => savePrinterSettings({ ...s.all, [job]: { ...s.all[job], ...patch } });
   const usedFor = (name: string, job: PrintJob) => (s.all[job].printer ? s.all[job].printer === name : !!s.printers.find((p) => p.name === name)?.isDefault);
+  // Phones and tablets have no Windows printer service: Bluetooth printers come first there.
+  const mobile = isMobileDevice();
+  const bluetooth = <BluetoothPrinters settings={s.all} hasKot={hasKot} />;
 
   return (
-    <Section title="Printer" description="Choose which printer prints what on this computer. Each billing counter can have its own printers.">
+    <Section title="Printer" description="Choose which printer prints what on this device. Each billing counter, phone or tablet can have its own printers.">
+      {mobile && bluetooth}
       {/* Printers on this computer */}
-      <div className="rounded-xl border border-border">
+      <div className={cn('rounded-xl border border-border', mobile && !s.connected && 'hidden')}>
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
           <Printer className="h-4 w-4 text-primary" />
           <p className="flex-1 text-[13px] font-semibold">Printers on this computer</p>
@@ -166,14 +189,15 @@ export function PrinterSettings() {
         ) : (
           <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center">
             <p className="flex-1 text-[13px] text-muted-foreground">
-              To see this computer’s printers and print without the print window, install <b className="text-foreground">Sahasra Printer</b> once on this computer, then press Refresh.
+              To see this computer’s printers and print without the print window, install <b className="text-foreground">SAHAASRA Printer for Windows</b> once on this computer, then press Refresh.
             </p>
             <Button asChild>
-              <a href={SAHAASRA_PRINTER_DOWNLOAD} download="SahasraPrinter.exe"><Download /> Download Sahasra Printer</a>
+              <a href={SAHAASRA_PRINTER_DOWNLOAD} download="SahasraPrinter.exe"><Download /> Download for Windows</a>
             </Button>
           </div>
         )}
       </div>
+      {!mobile && bluetooth}
 
       <div className={cn('grid gap-4', hasKot && 'xl:grid-cols-2')}>
         <JobCard
@@ -187,6 +211,8 @@ export function PrinterSettings() {
           find={s.find}
           onTest={() => bill.print(testSale())}
           testing={bill.printing}
+          btPrinters={s.bluetooth.printers}
+          status={s.jobStatus('bill')}
         />
         {hasKot && (
           <JobCard
@@ -200,10 +226,15 @@ export function PrinterSettings() {
             find={s.find}
             onTest={() => kot.print(testKot())}
             testing={kot.printing}
+            btPrinters={s.bluetooth.printers}
+            status={s.jobStatus('kot')}
           />
         )}
       </div>
-      <p className="text-xs text-muted-foreground">Saved automatically for this computer. Bill size follows your default design in Bill Studio; KOT size and layout follow your KOT design in Bill Studio.</p>
+      <p className="text-xs text-muted-foreground">
+        Saved automatically for this device. Bill size follows your default design in Bill Studio (Bluetooth receipt printers use your 58/80 mm receipt design); KOT size and layout follow your KOT design in Bill Studio.
+      </p>
+      <PrintHistory />
       {bill.element}
       {kot.element}
     </Section>

@@ -1,33 +1,69 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
+import { useWorkspace } from '@/app/providers/WorkspaceProvider';
 import { toast } from '@/components/ui/toast';
 import { InvoiceRenderer } from '@/features/bill-studio/InvoiceRenderer';
-import { saleToInvoiceData, type InvoiceTemplate } from '@/features/bill-studio/model';
+import { PRESET_TEMPLATES, saleToInvoiceData, type InvoiceTemplate } from '@/features/bill-studio/model';
 import { useTemplates } from '@/features/bill-studio/useTemplates';
 import { qk } from '@/hooks/queries';
+import { inNativeApp, nativeSaveFile, nativeShareFile } from '@/lib/bluetooth/native';
+import { getPrinter, receiptOptions, type SavedPrinter } from '@/lib/bluetooth/printers';
+import { elementToBitmap } from '@/lib/escpos/raster';
+import { invoiceToEscPos, type Seller } from '@/lib/escpos/receipt';
+import { EscPos } from '@/lib/escpos/builder';
 import { downloadElementPdf, elementPdfBlob } from '@/lib/pdf';
-import { getPrinterSettings, localPrinters, NoPrinterService, printPdf, PRINTER_STATUS_KEY } from '@/lib/printer';
+import { bluetoothIdOf, getPrinterSettings, localPrinters, NoPrinterService, printPdf, PRINTER_STATUS_KEY } from '@/lib/printer';
+import { DuplicateJobError, logComputerPrint, printOnBluetooth } from '@/lib/printJobs';
 import { printElement } from '@/lib/share';
 import type { Customer, Sale } from '@/types';
 
-type Job = { sale: Sale; mode: 'print' | 'download' | 'dialog' };
+type Mode = 'print' | 'download' | 'dialog' | 'share';
+type Job = { sale: Sale; mode: Mode; reprint?: boolean };
+
+/**
+ * The bill design for a thermal Bluetooth printer: the bill's own design when it is a receipt
+ * design, otherwise the business's receipt design for that paper width (Bill Studio), otherwise
+ * Sahaasra's built-in receipt design. An A4 design is never squeezed onto a receipt roll.
+ */
+export function receiptTemplate(billTemplate: InvoiceTemplate | undefined, templates: InvoiceTemplate[], paper: 58 | 80): InvoiceTemplate {
+  if (billTemplate?.paper.startsWith('thermal')) return billTemplate;
+  const want = paper === 58 ? 'thermal58' : 'thermal80';
+  return (
+    templates.find((t) => t.paper === want && t.isDefault) ??
+    templates.find((t) => t.paper === want && !PRESET_TEMPLATES.some((p) => p.id === t.id)) ??
+    templates.find((t) => t.paper === want) ??
+    PRESET_TEMPLATES.find((t) => t.paper === want)!
+  );
+}
+
+/** The Bluetooth printer chosen for bills on this device, if any. */
+const bluetoothBillPrinter = (): SavedPrinter | null => {
+  const id = bluetoothIdOf(getPrinterSettings().bill.printer);
+  return id ? getPrinter(id) : null;
+};
 
 /**
  * Renders an invoice off-screen with the design it was issued with (or today's default
- * design for older invoices), then prints it or saves it as a PDF. With the Print Helper
- * set up on this computer, Print goes straight to the printer without a dialog.
+ * design for older invoices), then prints it or saves it as a PDF.
+ *  - Bluetooth printer chosen for bills (phones/tablets): an ESC/POS receipt goes straight to it.
+ *  - Sahaasra Printer for Windows installed: straight to the computer's printer.
+ *  - Otherwise the print window.
+ * Printing never touches the sale itself: a failed print can always be repeated.
  */
 export function useInvoicePrinter() {
   const qc = useQueryClient();
-  const { defaultTemplate } = useTemplates();
+  const ws = useWorkspace();
+  const { defaultTemplate, templates } = useTemplates();
   const [job, setJob] = useState<Job | null>(null);
   const [busy, setBusy] = useState(false);
-  /** Last direct print that failed, so screens can offer the print dialog instead. */
+  /** Last direct print that failed, so screens can offer to try again or use the print window. */
   const [failed, setFailed] = useState<{ sale: Sale; message: string } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   const saved = job?.sale.seller?.template;
-  const template: InvoiceTemplate | undefined = saved ? { ...saved, isDefault: false, updatedAt: '' } : defaultTemplate;
+  const billTemplate: InvoiceTemplate | undefined = saved ? { ...saved, isDefault: false, updatedAt: '' } : defaultTemplate;
+  const btPrinter = job?.mode === 'print' ? bluetoothBillPrinter() : null;
+  const template = btPrinter ? receiptTemplate(billTemplate, templates, btPrinter.paper) : billTemplate;
 
   useEffect(() => {
     if (!job || !template) return;
@@ -40,8 +76,69 @@ export function useInvoicePrinter() {
       const dialog = () => {
         if (!printElement(el, `Invoice ${sale.invoiceNo}`)) toast.error('Allow pop-ups for this site to print invoices.');
       };
+      const customer = sale.customerId ? qc.getQueryData<Customer[]>(qk.customers)?.find((c) => c.id === sale.customerId) : undefined;
+      const fail = (message: string) => {
+        setFailed({ sale, message });
+        toast.error(`${sale.invoiceNo} didn’t print`, {
+          description: message,
+          action: { label: 'Try again', onClick: () => setJob({ sale, mode: 'print' }) },
+          duration: 10000,
+        });
+      };
+
       if (job.mode === 'dialog') {
         dialog();
+      } else if (job.mode === 'print' && btPrinter) {
+        const bt = btPrinter;
+        try {
+          const seller: Seller = sale.seller ?? {
+            businessName: ws.businessName,
+            address: ws.address,
+            phone: ws.phone,
+            email: ws.email,
+            gstin: ws.gstin,
+            logo: ws.logo ?? '',
+            upiId: String(ws.settings.upiId ?? '').trim(),
+            bankName: String(ws.settings.bankName ?? '').trim(),
+            bankAccount: String(ws.settings.bankAccount ?? '').trim(),
+            bankIfsc: String(ws.settings.bankIfsc ?? '').trim(),
+            bankBranch: String(ws.settings.bankBranch ?? '').trim(),
+          };
+          const data = saleToInvoiceData(sale, customer);
+          // The picture style needs the rendered bill now, before the element is removed.
+          const picture = bt.style === 'image' ? await elementToBitmap(el, bt.dots, bt.density) : null;
+          // The bill is ready: the screen is free while the printer works (progress shows at the bottom).
+          setJob((current) => (current === job ? null : current));
+          const result = await printOnBluetooth({
+            kind: sale.id === 'test' ? 'test' : 'bill',
+            reference: sale.invoiceNo,
+            printerId: bt.id,
+            copies: settings.copies,
+            reprint: job.reprint,
+            build: async () => {
+              if (picture) {
+                const p = new EscPos(bt.encoding).init().image(picture).feed(bt.cut ? 2 : 4);
+                if (bt.cut) p.cut();
+                return p.build();
+              }
+              return invoiceToEscPos(template, data, seller, receiptOptions(bt));
+            },
+          });
+          if (result.status === 'printed') {
+            setFailed(null);
+            toast.success(`${sale.invoiceNo} printed on ${bt.name}`);
+          } else if (result.status === 'cancelled') {
+            toast.info(`${sale.invoiceNo}: printing cancelled`);
+          } else {
+            fail(result.error ?? 'The printer did not print.');
+          }
+        } catch (e) {
+          if (e instanceof DuplicateJobError) toast.info(e.message);
+          else fail(e instanceof Error ? e.message : 'Could not print.');
+        } finally {
+          setJob((current) => (current === job ? null : current));
+        }
+        return;
       } else if (job.mode === 'print') {
         setBusy(true);
         try {
@@ -51,6 +148,7 @@ export function useInvoicePrinter() {
           const r = await printPdf(pdf, { printer: settings.printer, copies: settings.copies, paper: template.paper, title: sale.invoiceNo });
           setFailed(null);
           toast.success(`${sale.invoiceNo} printed on ${r.printer}`);
+          if (sale.id !== 'test') logComputerPrint({ kind: 'bill', reference: sale.invoiceNo, printer: r.printer, copies: settings.copies, ok: true });
         } catch (e) {
           if (e instanceof NoPrinterService) {
             dialog();
@@ -58,6 +156,7 @@ export function useInvoicePrinter() {
             // Never leave the counter stuck: offer the print window instead.
             const message = e instanceof Error ? e.message : 'Could not print.';
             setFailed({ sale, message });
+            if (sale.id !== 'test') logComputerPrint({ kind: 'bill', reference: sale.invoiceNo, printer: settings.printer || 'Default printer', copies: settings.copies, ok: false, error: message });
             toast.error(message, {
               description: 'Check the printer in Settings → Printer.',
               action: { label: 'Print window', onClick: () => setJob({ sale, mode: 'dialog' }) },
@@ -68,11 +167,37 @@ export function useInvoicePrinter() {
           setBusy(false);
           qc.invalidateQueries({ queryKey: PRINTER_STATUS_KEY });
         }
+      } else if (job.mode === 'share') {
+        setBusy(true);
+        try {
+          const blob = await elementPdfBlob(el, template.paper);
+          const name = `${sale.invoiceNo}.pdf`;
+          const text = `Invoice ${sale.invoiceNo} from ${ws.businessName}`;
+          if (inNativeApp()) {
+            await nativeShareFile(blob, name, text);
+          } else {
+            const file = new File([blob], name, { type: 'application/pdf' });
+            if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: name, text });
+            else {
+              await downloadElementPdf(el, name, template.paper);
+              toast.success(`${name} downloaded — this browser can’t share files directly.`);
+            }
+          }
+        } catch (e) {
+          if (!(e instanceof DOMException && e.name === 'AbortError')) toast.error('Could not share the PDF.');
+        } finally {
+          setBusy(false);
+        }
       } else {
         setBusy(true);
         try {
-          await downloadElementPdf(el, `${sale.invoiceNo}.pdf`, template.paper);
-          toast.success(`${sale.invoiceNo}.pdf downloaded`);
+          if (inNativeApp()) {
+            const r = await nativeSaveFile(await elementPdfBlob(el, template.paper), `${sale.invoiceNo}.pdf`);
+            toast.success(`${sale.invoiceNo}.pdf saved to ${r.location}`);
+          } else {
+            await downloadElementPdf(el, `${sale.invoiceNo}.pdf`, template.paper);
+            toast.success(`${sale.invoiceNo}.pdf downloaded`);
+          }
         } catch {
           toast.error('Could not create the PDF. Try Print → Save as PDF instead.');
         } finally {
@@ -97,6 +222,11 @@ export function useInvoicePrinter() {
       setFailed(null);
       setJob({ sale, mode: 'print' });
     },
+    /** Prints a bill that was already printed (marked as a reprint in the print history). */
+    printAgain: (sale: Sale) => {
+      setFailed(null);
+      setJob({ sale, mode: 'print', reprint: true });
+    },
     /** Why the last direct print failed (null when it worked). */
     failed,
     /** Prints the failed bill through the browser's print dialog instead. */
@@ -105,10 +235,13 @@ export function useInvoicePrinter() {
       setJob({ sale, mode: 'dialog' });
     },
     download: (sale: Sale) => setJob({ sale, mode: 'download' }),
+    /** Shares the bill as a PDF (WhatsApp, email…) where the device allows it. */
+    share: (sale: Sale) => setJob({ sale, mode: 'share' }),
     /** True while a bill is being prepared for the printer or a PDF. */
     busy: busy || (!!job && job.mode !== 'dialog'),
     printing: !!job && job.mode === 'print',
     downloading: !!job && job.mode === 'download',
+    sharing: !!job && job.mode === 'share',
     element,
   };
 }

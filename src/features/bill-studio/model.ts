@@ -274,6 +274,8 @@ export interface InvoiceData {
   igst: number;
   total: number;
   paid: number;
+  /** How the bill was paid (cash, upi, card…), for issued invoices. */
+  payment?: string;
   notes?: string;
   /** Seller details saved with the invoice; when absent the current business details are used. */
   seller?: SellerSnapshot;
@@ -334,6 +336,7 @@ export function saleToInvoiceData(sale: Sale, customer?: { gstin?: string; phone
     igst: 0,
     total: sale.total,
     paid: sale.paid,
+    payment: sale.payment,
     seller: sale.seller,
   };
 }

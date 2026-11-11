@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { PAPER, SAMPLE_INVOICE, type InvoiceData, type InvoiceTemplate, type TemplateElement } from './model';
 
 const InvoiceDataContext = createContext<InvoiceData>(SAMPLE_INVOICE);
+const PAYMENT_LABEL: Record<string, string> = { cash: 'Cash', upi: 'UPI', card: 'Card', bank: 'Bank', credit: 'Credit', split: 'Split' };
 
 const FONT: Record<InvoiceTemplate['font'], string> = {
   sans: '"Inter Variable", Inter, system-ui, sans-serif',
@@ -168,6 +169,8 @@ export function ElementView({ el, template }: { el: TemplateElement; template: I
             <div style={{ borderTop: `1px ${thermal ? 'dashed' : 'solid'} ${thermal ? '#999' : template.accent}`, marginTop: 4, paddingTop: 4, fontSize: '1.25em' }}>
               <Row label="Grand Total" value={formatINR(S.total)} strong accent={thermal ? undefined : template.accent} />
             </div>
+            {S.payment && S.paid > 0 && <Row label={`Paid (${PAYMENT_LABEL[S.payment] ?? S.payment})`} value={money(S.paid)} />}
+            {!S.sample && S.payment && due > 0 && <Row label="Balance due" value={money(due)} strong />}
           </div>
         </div>
       );

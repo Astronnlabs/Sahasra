@@ -1,14 +1,12 @@
 import { format } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
 import { useWorkspace } from '@/app/providers/WorkspaceProvider';
-import { toast } from '@/components/ui/toast';
 import { usePageAccess } from '@/hooks/usePageAccess';
-import { elementPdfBlob } from '@/lib/pdf';
-import { getPrinterSettings, localPrinters, NoPrinterService, printPdf } from '@/lib/printer';
-import { printElement } from '@/lib/share';
 import type { KotDesign } from '@/services';
 import type { Kot } from '@/types';
 import { DEFAULT_KOT_DESIGN, KOT_PAGES, useKotDesign } from './kotDesign';
+import { printKot } from './kotPrintRun';
+
 
 const WIDTH = { thermal80: 302, thermal58: 219 } as const;
 const ITEM_SIZE = { normal: 13, large: 15, xl: 19 } as const;
@@ -52,44 +50,37 @@ export function KotTicket({ kot, business, design = DEFAULT_KOT_DESIGN }: { kot:
   );
 }
 
-/** Prints KOTs on the kitchen printer chosen in Settings → Printer (or the print window). */
+/**
+ * Prints KOTs on the kitchen printer chosen in Settings → Printer (Bluetooth, computer printer
+ * or the print window). KOTs sent quickly one after another print one by one, in order.
+ */
 export function useKotPrinter(override?: KotDesign) {
   const { businessName } = useWorkspace();
   const { can } = usePageAccess();
   const { design: saved } = useKotDesign(!override && [...KOT_PAGES, 'bill-studio'].some(can));
   const design = override ?? saved;
-  const [queue, setQueue] = useState<Kot | null>(null);
+  const [queue, setQueue] = useState<Kot[]>([]);
   const ref = useRef<HTMLDivElement>(null);
+  const started = useRef<Kot | null>(null);
+  const current = queue[0] ?? null;
 
   useEffect(() => {
-    if (!queue) return;
-    const t = setTimeout(async () => {
+    if (!current || started.current === current) return;
+    const t = setTimeout(() => {
       const el = ref.current?.firstElementChild as HTMLElement | null;
-      const kot = queue;
-      setQueue(null);
-      if (!el) return;
-      const settings = getPrinterSettings().kot;
-      try {
-        await localPrinters();
-        const pdf = await elementPdfBlob(el, design.paper);
-        const r = await printPdf(pdf, { printer: settings.printer, copies: settings.copies, paper: design.paper, title: kot.number });
-        toast.success(`${kot.number} printed on ${r.printer}`);
-      } catch (e) {
-        if (e instanceof NoPrinterService) {
-          if (!printElement(el, kot.number)) toast.error('Allow pop-ups for this site to print KOTs.');
-        } else {
-          toast.error(`${kot.number} didn’t print: ${e instanceof Error ? e.message : 'printer error'}`, { description: 'Check the KOT printer in Settings → Printer.' });
-        }
-      }
+      started.current = current;
+      const release = () => setQueue((q) => (q[0] === current ? q.slice(1) : q));
+      if (!el) return release();
+      void printKot(el, current, businessName, design, release);
     }, 300);
     return () => clearTimeout(t);
-  }, [queue, design.paper]);
+  }, [current, design, businessName]);
 
-  const element = queue ? (
+  const element = current ? (
     <div ref={ref} aria-hidden className="pointer-events-none fixed -left-[10000px] top-0">
-      <KotTicket kot={queue} business={businessName} design={design} />
+      <KotTicket kot={current} business={businessName} design={design} />
     </div>
   ) : null;
 
-  return { print: (kot: Kot) => setQueue(kot), printing: !!queue, element };
+  return { print: (kot: Kot) => setQueue((q) => [...q, kot]), printing: !!current, element };
 }

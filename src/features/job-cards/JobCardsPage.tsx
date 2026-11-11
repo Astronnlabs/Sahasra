@@ -14,14 +14,13 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { Drawer, Modal } from '@/components/ui/dialog';
 import { Input, NativeSelect, Textarea } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from '@/components/ui/toast';
 import { AttributeFields, type Attributes } from '@/features/products/AttributeFields';
 import { useInvoicePrinter } from '@/features/sales/useInvoicePrinter';
 import { qk, useAppMutation, useCustomers, useEmployees, useProducts } from '@/hooks/queries';
 import { useDeleteAction } from '@/hooks/useDeleteAction';
 import { formatDate, formatINR } from '@/lib/format';
 import { sanitizeText } from '@/lib/sanitize';
-import { openWhatsApp } from '@/lib/share';
+import { openWhatsApp, printHtml } from '@/lib/share';
 import { cn } from '@/lib/utils';
 import { catalogServicesService, jobCardsService, productsService } from '@/services';
 import type { JobCard, JobLine, JobStatus, Product, Tone } from '@/types';
@@ -72,27 +71,23 @@ function estimateLines(lines: JobLine[], catalog: CatalogEntry[]) {
 }
 
 function printSlip(j: JobCard, cfg: JobsConfig, business: string, phone: string) {
-  const w = window.open('', '_blank', 'width=720,height=900');
-  if (!w) {
-    toast.error('Allow pop-ups to print the slip.');
-    return;
-  }
   const row = (label: string, value: string) => (value ? `<tr><td class="muted">${esc(label)}</td><td>${esc(value)}</td></tr>` : '');
   const details = cfg.details
     .map((f) => (j.details[f.key] ? `<td><span class="muted">${esc(f.label)}</span><br><b>${esc(j.details[f.key])}</b></td>` : ''))
     .filter(Boolean);
   const grid: string[] = [];
   for (let i = 0; i < details.length; i += 4) grid.push(`<tr>${details.slice(i, i + 4).join('')}</tr>`);
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(j.number)}</title>
-<style>body{font-family:system-ui,sans-serif;color:#171522;padding:28px;max-width:680px;margin:auto}h1{font-size:20px;margin:0}h2{font-size:14px;margin:20px 0 6px}table{width:100%;border-collapse:collapse}td{padding:6px 4px;border-bottom:1px solid #eee;font-size:13px;vertical-align:top}.muted{color:#6F6B78;font-size:12px}.no{font-size:22px;font-weight:700;color:#6D3DE8}.box{border:1px dashed #bbb;border-radius:8px;padding:10px;margin-top:16px;font-size:12px}</style></head>
-<body><h1>${esc(business)}</h1><p class="muted">${esc(phone)}</p>
+  // Printed from this page (no pop-up), so it also works on phones and in the Android app.
+  printHtml(
+    `<h1>${esc(business)}</h1><p class="muted">${esc(phone)}</p>
 <p>${esc(cfg.singular)} <span class="no">${esc(j.number)}</span><br><span class="muted">Received ${esc(formatDate(j.createdAt))}${j.promisedAt ? ` · Promised ${esc(formatDate(j.promisedAt))}` : ''}</span></p>
 <table>${row('Customer', `${j.customerName}${j.phone ? ` · ${j.phone}` : ''}`)}${row(cfg.itemLabel, j.item)}${row(cfg.identifierLabel, j.identifier)}${row(cfg.problemLabel, j.problem)}${row('Estimate', j.estimate ? formatINR(j.estimate) : '')}${row('Advance paid', j.advance ? formatINR(j.advance) : '')}${row('Balance (approx.)', j.estimate ? formatINR(j.balance) : '')}</table>
 ${grid.length ? `<h2>${esc(cfg.detailsTitle)}</h2><table>${grid.join('')}</table>` : ''}
 <div class="box">Please bring this slip when collecting. The estimate may change after inspection; we will call you before doing extra work. Items not collected within 60 days of the promised date are not our responsibility.</div>
-<p style="margin-top:36px" class="muted">Customer signature ____________________ &nbsp;&nbsp; For ${esc(business)} ____________________</p>
-<script>window.onload=function(){window.print()}</script></body></html>`);
-  w.document.close();
+<p style="margin-top:36px" class="muted">Customer signature ____________________ &nbsp;&nbsp; For ${esc(business)} ____________________</p>`,
+    '.print-doc{font-family:system-ui,sans-serif;color:#171522;padding:28px;max-width:680px;margin:auto;background:#fff}.print-doc h1{font-size:20px;margin:0}.print-doc h2{font-size:14px;margin:20px 0 6px}.print-doc table{width:100%;border-collapse:collapse}.print-doc td{padding:6px 4px;border-bottom:1px solid #eee;font-size:13px;vertical-align:top}.print-doc .muted{color:#6F6B78;font-size:12px}.print-doc .no{font-size:22px;font-weight:700;color:#6D3DE8}.print-doc .box{border:1px dashed #bbb;border-radius:8px;padding:10px;margin-top:16px;font-size:12px}',
+    j.number,
+  );
 }
 
 function LinesEditor({ lines, onChange, catalog }: { lines: JobLine[]; onChange: (l: JobLine[]) => void; catalog: CatalogEntry[] }) {

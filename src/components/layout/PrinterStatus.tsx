@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWorkspace } from '@/app/providers/WorkspaceProvider';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { printerLevel, printerMessage, usePrinterStatus, type PrinterLevel } from '@/lib/printer';
+import { usePrinterStatus, type PrinterLevel } from '@/lib/printer';
 import { cn } from '@/lib/utils';
 
 const DOT = { ok: 'bg-success', warn: 'bg-warning', error: 'bg-danger', unknown: 'bg-subtle' } as const;
@@ -20,10 +20,7 @@ export function PrinterStatus() {
   const jobs = [
     { job: 'bill' as const, label: 'Bills', icon: ReceiptText },
     ...(businessType === 'restaurant' || businessType === 'hotel' ? [{ job: 'kot' as const, label: 'KOT', icon: ChefHat }] : []),
-  ].map((j) => {
-    const printer = s.find(s.all[j.job].printer);
-    return { ...j, level: s.isLoading ? ('unknown' as const) : printerLevel(s.connected, printer), message: s.isLoading ? 'Checking…' : printerMessage(s.connected, printer, s.all[j.job].printer) };
-  });
+  ].map((j) => ({ ...j, ...s.jobStatus(j.job) }));
   // The dot shows the worst of the bill and KOT printers.
   const level = jobs.reduce<PrinterLevel>((w, j) => (RANK[j.level] > RANK[w] ? j.level : w), 'unknown');
 

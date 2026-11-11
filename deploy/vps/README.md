@@ -28,6 +28,7 @@ VAAHAK will go beside it the same way: `/srv/vaahak`, user `vaahak`, its own dat
 | Change settings | `nano /srv/sahaasra/shared/.env` then `systemctl restart sahaasra` |
 | Is it running? | `systemctl status sahaasra` |
 | Logs | `journalctl -u sahaasra -f` |
+| Build the Android app (after `android/` changes) | `bash /srv/sahaasra/app/deploy/vps/build-android.sh` |
 | Back up now | `sudo -u postgres sahaasra-backup` |
 | Restore a backup | `systemctl stop sahaasra; sudo -u postgres pg_restore --clean --if-exists -d sahaasra /srv/sahaasra/backups/<file>.dump; systemctl start sahaasra` |
 
@@ -42,3 +43,11 @@ VAAHAK will go beside it the same way: `/srv/vaahak`, user `vaahak`, its own dat
 6. Later: add PAYU_KEY and PAYU_SALT to `/srv/sahaasra/shared/.env` and run `systemctl restart sahaasra`.
 
 The database here is separate from the Render/Supabase one, which stays for testing.
+
+## Android app (Bluetooth printing)
+
+`build-android.sh` installs Java 17, the Android SDK and Gradle under `/opt` (once), creates the app's
+signing key in `/srv/sahaasra/shared/android/` (once, root only — **copy `release.jks` and
+`keystore.properties` somewhere safe**; without them phones can't update the app), builds the APK and publishes
+it at https://app.sahaasra.in/downloads/android/SAHAASRA.apk (served by the app from
+`/srv/sahaasra/shared/downloads/android/`). See `android/README.md`.

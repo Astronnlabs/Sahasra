@@ -9,6 +9,7 @@ import { useHotkey } from '@/hooks/useHotkey';
 import { cn } from '@/lib/utils';
 import { MobileBottomNav, MobileNavDrawer } from './MobileNav';
 import { AccessGate } from './AccessGate';
+import { PrintJobIndicator } from './PrintJobIndicator';
 import { Sidebar } from './Sidebar';
 import { SupportModeBanner } from './SupportModeBanner';
 import { Topbar } from './Topbar';
@@ -64,6 +65,7 @@ export function AppLayout() {
       <MobileNavDrawer open={navOpen} onOpenChange={setNavOpen} />
       <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
       {!fullBleed && <AssistantWidget />}
+      <PrintJobIndicator />
 
       <Modal open={shortcutsOpen} onOpenChange={setShortcutsOpen} title="Keyboard shortcuts" description="Work faster across Sahaasra." size="sm">
         <ul className="divide-y divide-border pb-2">

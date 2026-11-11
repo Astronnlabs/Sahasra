@@ -1,3 +1,5 @@
+import { inNativeApp, nativeSystemPrint } from '@/lib/bluetooth/native';
+
 /** Opens WhatsApp (app or web) with a pre-filled message. The user presses Send themselves. */
 export function openWhatsApp(phone: string | undefined, text: string) {
   const digits = (phone ?? '').replace(/\D/g, '');
@@ -26,8 +28,21 @@ const PRINT_STYLE = `
  * and is never stopped by a pop-up blocker.
  */
 export function printElement(el: HTMLElement, title: string) {
+  printMarkup(withEmbeddedImages(el), title);
+  return true;
+}
+
+/**
+ * Prints a ready-made document (e.g. a job slip or payslip) the same way: in this page, so it
+ * works on phones and is never blocked as a pop-up. `css` should only style inside `.print-doc`.
+ */
+export function printHtml(bodyHtml: string, css: string, title: string) {
+  printMarkup(Promise.resolve(`<div class="print-doc"><style>${css}</style>${bodyHtml}</div>`), title);
+}
+
+function printMarkup(markup: Promise<string>, title: string) {
   void (async () => {
-    const html = await withEmbeddedImages(el);
+    const html = await markup;
 
     let style = document.getElementById(`${PRINT_ROOT}-style`);
     if (!style) {
@@ -71,13 +86,17 @@ export function printElement(el: HTMLElement, title: string) {
     };
     window.addEventListener('afterprint', () => setTimeout(cleanup, 300), { once: true });
     setTimeout(() => {
+      if (inNativeApp()) {
+        // Inside the Android app: Android's print dialog (it reports back when it is closed).
+        nativeSystemPrint(title).catch(() => cleanup());
+        return;
+      }
       window.print();
       // Phones may return from print() before the dialog closes; the bill stays hidden on screen,
       // so it is simply removed later (or replaced by the next print).
       setTimeout(cleanup, 60_000);
     }, 100);
   })();
-  return true;
 }
 
 /**

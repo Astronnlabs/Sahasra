@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { FullScreenLoader } from '@/components/feedback/PageSkeleton';
-import { ApiError, authService, SESSION_EXPIRED_EVENT, tenantsService, type LoginInput, type MePayload } from '@/services';
+import { ApiError, authService, PLAN_REQUIRED_EVENT, SESSION_EXPIRED_EVENT, tenantsService, type LoginInput, type MePayload, type SignupInput } from '@/services';
 import type { Permission, SessionUser } from '@/types';
 
 /** Set while a Super Admin is working inside a business in support mode. */
@@ -17,6 +17,8 @@ interface AuthContextValue {
   isSuperAdmin: boolean;
   impersonating: Impersonation | null;
   login: (input: LoginInput & { remember: boolean }) => Promise<MePayload>;
+  /** Creates a business and its owner login, then signs in. */
+  signup: (input: SignupInput) => Promise<MePayload>;
   /** Re-reads the session from the server (after sign-up, profile edits…). */
   refresh: () => Promise<MePayload | null>;
   logout: () => Promise<void>;
@@ -60,15 +62,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const onExpired = () => setMe(null);
+    const onPlanRequired = () => void refetch();
     window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
-    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
-  }, [setMe]);
+    window.addEventListener(PLAN_REQUIRED_EVENT, onPlanRequired);
+    return () => {
+      window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+      window.removeEventListener(PLAN_REQUIRED_EVENT, onPlanRequired);
+    };
+  }, [setMe, refetch]);
 
   const refresh = useCallback(async () => (await refetch()).data ?? null, [refetch]);
 
   const login = useCallback(
     async (input: LoginInput & { remember: boolean }) => {
       await authService.login(input);
+      const next = await authService.me();
+      setMe(next);
+      return next;
+    },
+    [setMe],
+  );
+
+  const signup = useCallback(
+    async (input: SignupInput) => {
+      await authService.signup(input);
       const next = await authService.me();
       setMe(next);
       return next;
@@ -109,8 +126,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const user = me?.user ?? null;
   const isSuperAdmin = user?.role === 'Super Admin';
   const value = useMemo<AuthContextValue>(
-    () => ({ user, me, isAuthenticated: !!user, isSuperAdmin, impersonating: isSuperAdmin ? me?.impersonating ?? null : null, login, refresh, logout, startImpersonation, stopImpersonation, hasPermission, exitTo }),
-    [user, me, isSuperAdmin, login, refresh, logout, startImpersonation, stopImpersonation, hasPermission, exitTo],
+    () => ({ user, me, isAuthenticated: !!user, isSuperAdmin, impersonating: isSuperAdmin ? me?.impersonating ?? null : null, login, signup, refresh, logout, startImpersonation, stopImpersonation, hasPermission, exitTo }),
+    [user, me, isSuperAdmin, login, signup, refresh, logout, startImpersonation, stopImpersonation, hasPermission, exitTo],
   );
 
   if (isPending) return <FullScreenLoader />;

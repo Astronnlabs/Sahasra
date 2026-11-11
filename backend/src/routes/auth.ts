@@ -7,7 +7,9 @@ import { audit } from '../lib/audit.js';
 import { createSession, destroySession, hashPassword, verifyPassword } from '../lib/auth.js';
 import { badRequest, conflict, forbidden, notFound, unauthorized } from '../lib/http.js';
 import { workspaceOut } from '../lib/mappers.js';
-import { email, password, phoneKey, requiredText } from '../lib/validate.js';
+import { BUSINESS_TYPES } from '../lib/access.js';
+import { createTenant } from '../lib/tenants.js';
+import { email, password, phone, phoneKey, requiredText } from '../lib/validate.js';
 import { requireAuth } from '../middleware/auth.js';
 
 export const authRouter = Router();
@@ -63,7 +65,41 @@ authRouter.post('/login', limiter, async (req, res) => {
   res.json({ ok: true });
 });
 
-// Businesses (and their owner logins) are created only by the Sahasra Super Admin — see /platform/tenants.
+// ── Public sign-up: anyone can create a business; it is unlocked once the Build plan is paid ──
+const signupLimiter = rateLimit({ windowMs: 60 * 60_000, limit: 5, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'Too many sign-ups from this network. Please try again in an hour.' } });
+
+authRouter.post('/signup', signupLimiter, async (req, res) => {
+  const body = z
+    .object({
+      businessName: requiredText('Business name', 80, 2),
+      type: z.enum(BUSINESS_TYPES, { errorMap: () => ({ message: 'Choose your business type' }) }),
+      city: requiredText('City', 60),
+      ownerName: requiredText('Your name', 60, 2),
+      email,
+      phone,
+      password,
+    })
+    .strict()
+    .parse(req.body);
+  const { owner } = await createTenant({
+    name: body.businessName,
+    type: body.type,
+    city: body.city,
+    ownerName: body.ownerName,
+    ownerEmail: body.email,
+    phone: body.phone,
+    plan: 'build',
+    password: body.password,
+    ownerStatus: 'active',
+    selfSignup: true,
+  });
+  await db.user.update({ where: { id: owner.id }, data: { lastLoginAt: new Date() } });
+  await createSession(req, res, owner.id, true);
+  await db.auditLog.create({ data: { tenantId: owner.tenantId, userId: owner.id, user: owner.name, action: 'created', module: 'Auth', target: body.businessName, details: 'Signed up on the website', ip: req.ip ?? '' } });
+  res.status(201).json({ ok: true });
+});
+
+// Businesses can also be created by the Sahasra Super Admin — see /platform/tenants.
 
 authRouter.post('/logout', async (req, res) => {
   await destroySession(req, res);

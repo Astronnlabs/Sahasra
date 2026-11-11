@@ -5,7 +5,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
-import { errorHandler, notFound } from './lib/http.js';
+import { errorHandler, HttpError, notFound } from './lib/http.js';
+import { PAYU_FORM_HOSTS, planLocked } from './lib/subscription.js';
+import { payuReturn, subscriptionRouter } from './routes/subscription.js';
 import { csrfGuard, loadAuth, requireAuth } from './middleware/auth.js';
 import { adminRouter } from './routes/admin.js';
 import { analyticsRouter } from './routes/analytics.js';
@@ -29,10 +31,15 @@ export function createApp() {
   app.set('trust proxy', config.isProd ? 1 : 'loopback');
   app.use(
     helmet({
-      contentSecurityPolicy: config.isProd ? undefined : false,
+      // Default policy, plus permission to post the checkout form to PayU's hosted payment page.
+      contentSecurityPolicy: config.isProd ? { directives: { formAction: ["'self'", ...PAYU_FORM_HOSTS] } } : false,
       crossOriginResourcePolicy: { policy: 'same-origin' },
     }),
   );
+  // PayU posts the payment result here as a normal form (no app header, no session needed).
+  app.post('/api/payments/payu/return', express.urlencoded({ extended: false, limit: '64kb' }), (req, res, next) => {
+    payuReturn(req, res).catch(next);
+  });
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
 
@@ -49,6 +56,13 @@ export function createApp() {
   api.use('/auth', authRouter);
   // Everything below needs a signed-in user.
   api.use(requireAuth);
+  // Plan page and payments stay reachable while the plan is unpaid.
+  api.use(subscriptionRouter);
+  api.use((req, _res, next) => {
+    const a = req.auth!;
+    if (a.tenant && !a.isSuperAdmin && planLocked(a.tenant)) throw new HttpError(402, 'Your SAHASRA plan is not active. Buy or renew the plan to continue.', { code: 'PLAN_REQUIRED' });
+    next();
+  });
   api.use(referralsRouter);
   api.use(importMoreRouter);
   api.use(platformRouter);

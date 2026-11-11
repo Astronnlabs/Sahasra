@@ -26,3 +26,18 @@ services:
         sync: false
       - key: VAAHAK_API_URL
         value: https://vaahak.onrender.com
+      # Plan purchases (PayU hosted checkout). PayU returns to {PUBLIC_URL or APP_ORIGIN}/api/payments/payu/return.
+      - key: PAYU_KEY
+        sync: false
+      - key: PAYU_SALT
+        sync: false
+      - key: PAYU_MODE
+        value: live
+
+  # Public website (website/ folder): features, pricing, login and sign-up buttons.
+  - type: web
+    name: sahasra-website
+    runtime: static
+    rootDir: website
+    buildCommand: ""
+    staticPublishPath: .

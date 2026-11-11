@@ -72,6 +72,8 @@ export async function createTenant(input: TenantInput & {
   astronLabsService?: boolean;
   planValidFrom?: Date | string | null;
   planValidTo?: Date | string | null;
+  /** Public sign-up: unpaid until the plan is bought online. */
+  selfSignup?: boolean;
 }, tx?: Tx) {
   await assertLoginFree(input.ownerEmail, input.phone);
   const passwordHash = await hashPassword(input.password);
@@ -81,8 +83,10 @@ export async function createTenant(input: TenantInput & {
       data: {
         ...tenantDetails(input),
         plan: input.plan,
-        status: input.plan === 'trial' ? 'trial' : 'active',
-        mrr: PLAN_PRICE[input.plan] ?? 0,
+        // A self sign-up stays a "trial" (unpaid) until its first payment.
+        status: input.selfSignup || input.plan === 'trial' ? 'trial' : 'active',
+        mrr: input.selfSignup ? 0 : PLAN_PRICE[input.plan] ?? 0,
+        selfSignup: input.selfSignup ?? false,
         trialEndsAt: input.plan === 'trial' ? new Date(Date.now() + 14 * 864e5) : null,
         access: input.access ? normaliseAccess(input.access) : Prisma.DbNull,
         astronLabsService: isAstron || false,

@@ -33,7 +33,7 @@ export interface SessionUser {
 }
 
 // ---------- Platform (Super Admin) ----------
-export type Plan = 'trial' | 'starter' | 'growth' | 'enterprise' | 'astron_labs';
+export type Plan = 'trial' | 'build' | 'starter' | 'growth' | 'enterprise' | 'astron_labs';
 export type TenantStatus = 'active' | 'trial' | 'suspended' | 'churned';
 
 /** Device-captured position of the business premises. */

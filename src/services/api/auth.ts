@@ -23,9 +23,34 @@ export interface ServerWorkspace {
   planValidFrom?: string | null;
   planValidTo?: string | null;
   billingLabel?: string;
+  subscription?: SubscriptionState;
   /** Page ids this business may use; null = every page. */
   access: string[] | null;
   settings: Record<string, unknown>;
+}
+
+export type PlanPeriod = 'monthly' | 'quarterly' | 'yearly';
+
+/** The online (Build) plan: validity, and whether the software is locked until it is paid. */
+export interface SubscriptionState {
+  plan: Plan;
+  period: PlanPeriod | null;
+  validFrom: string | null;
+  validTo: string | null;
+  active: boolean;
+  daysLeft: number;
+  required: boolean;
+  locked: boolean;
+}
+
+export interface SignupInput {
+  businessName: string;
+  type: BusinessType;
+  city: string;
+  ownerName: string;
+  email: string;
+  phone: string;
+  password: string;
 }
 
 export interface MePayload {
@@ -48,6 +73,7 @@ export const authService = {
   setupStatus: () => api.get<{ needsSetup: boolean }>('/auth/setup'),
   setup: (input: { name: string; email: string; password: string }) => api.post<{ ok: true }>('/auth/setup', input),
   login: (input: LoginInput) => api.post<{ ok: true }>('/auth/login', input),
+  signup: (input: SignupInput) => api.post<{ ok: true }>('/auth/signup', input),
   logout: () => api.post<{ ok: true }>('/auth/logout'),
   me: () => api.get<MePayload>('/auth/me'),
   changePassword: (current: string, next: string) => api.post<{ ok: true }>('/auth/change-password', { current, next }),

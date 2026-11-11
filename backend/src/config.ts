@@ -12,6 +12,13 @@ const schema = z.object({
   TOKEN_ENCRYPTION_KEY: z.string().optional(),
   /** VAAHAK API (sends e-bills on WhatsApp and charges the business's VAAHAK wallet). */
   VAAHAK_API_URL: z.string().url().default('https://vaahak.onrender.com'),
+  /** PayU merchant key and salt for plan purchases (hosted checkout). Server only. */
+  PAYU_KEY: z.string().optional(),
+  PAYU_SALT: z.string().optional(),
+  /** live = real money, test = PayU sandbox. */
+  PAYU_MODE: z.enum(['live', 'test']).default('live'),
+  /** Public https address of this server, as PayU reaches it. Defaults to APP_ORIGIN (same server). */
+  PUBLIC_URL: z.string().url().optional(),
 });
 
 const parsed = schema.safeParse(process.env);

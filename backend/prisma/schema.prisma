@@ -44,6 +44,10 @@ model Tenant {
   planValidFrom DateTime?
   /// End of plan/service validity — billing becomes due after this date.
   planValidTo   DateTime?
+  /// Created from the public sign-up page: the Build plan must be paid before the software can be used.
+  selfSignup    Boolean   @default(false)
+  /// Billing period of the last plan bought online: monthly | quarterly | yearly
+  planPeriod    String?
   logoUploadId  String?
   settings      Json      @default("{}")
   invoiceSeq    Int       @default(0)
@@ -97,6 +101,7 @@ model Tenant {
   referrals        Referral[]
   vaahakLink       VaahakLink?
   billMessages     BillMessage[]
+  planPayments     PlanPayment[]
 
   @@index([status])
   @@index([createdAt])
@@ -943,6 +948,35 @@ model BillMessage {
   /// Deducted from the VAAHAK wallet.
   charged     Decimal  @default(0) @db.Decimal(12, 2)
   createdAt   DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+}
+
+// ════════ Subscription payments (PayU hosted checkout) ════════
+
+/// One attempt to buy a plan. The plan is extended only after PayU's verify API confirms the payment.
+model PlanPayment {
+  id        String    @id @default(cuid())
+  tenantId  String
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// Our PayU transaction id (unique).
+  txnid     String    @unique
+  plan      String
+  /// monthly | quarterly | yearly
+  period    String
+  amount    Decimal   @db.Decimal(12, 2)
+  /// pending | success | failed
+  status    String    @default("pending")
+  mihpayid  String?
+  mode      String?
+  error     String?
+  /// Plan validity this payment added.
+  validFrom DateTime?
+  validTo   DateTime?
+  paidAt    DateTime?
+  userId    String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@index([tenantId, createdAt])
 }

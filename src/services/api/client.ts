@@ -12,6 +12,8 @@ export class ApiError extends Error {
 
 /** Fired when the server says the session is gone, so the app can return to sign-in. */
 export const SESSION_EXPIRED_EVENT = 'sahasra:session-expired';
+/** Fired when the server says the business's plan must be bought or renewed. */
+export const PLAN_REQUIRED_EVENT = 'sahasra:plan-required';
 
 type Query = Record<string, string | number | boolean | undefined | null>;
 
@@ -46,6 +48,8 @@ async function request<T>(method: string, path: string, body?: unknown, query?: 
   if (!res.ok) {
     const message = (data && typeof data === 'object' && 'error' in data && String((data as { error: unknown }).error)) || `Request failed (${res.status})`;
     if (res.status === 401 && !path.startsWith('/auth/')) window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+    // The plan ran out: re-read the session so the app moves to the plan page.
+    if (res.status === 402) window.dispatchEvent(new Event(PLAN_REQUIRED_EVENT));
     throw new ApiError(res.status, message, (data as { details?: unknown } | null)?.details);
   }
   return data as T;

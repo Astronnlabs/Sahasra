@@ -52,7 +52,7 @@ const schema = z.object({
   ownerAltPhone: optionalPhone,
   ownerEmail: z.string().trim().email('Enter a valid email'),
   ownerPan: optional(PAN, 'PAN should look like ABCDE1234F'),
-  plan: z.enum(['trial', 'starter', 'growth', 'enterprise', 'astron_labs']),
+  plan: z.enum(['trial', 'build', 'starter', 'growth', 'enterprise', 'astron_labs']),
   astronLabsService: z.boolean().optional(),
   planValidityDuration: z.string().optional(),
   planValidFrom: z.string().optional(),

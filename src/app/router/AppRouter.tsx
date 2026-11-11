@@ -2,7 +2,7 @@ import { lazy, Suspense, type ComponentType } from 'react';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import { FullScreenLoader } from '@/components/feedback/PageSkeleton';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { GuestRoute, ProtectedRoute, SuperAdminRoute } from './ProtectedRoute';
+import { GuestRoute, PlanRoute, ProtectedRoute, SuperAdminRoute } from './ProtectedRoute';
 
 /** Route-level code splitting for named page exports. */
 const page = <T extends Record<string, unknown>>(loader: () => Promise<T>, name: keyof T) =>
@@ -10,6 +10,8 @@ const page = <T extends Record<string, unknown>>(loader: () => Promise<T>, name:
 
 const LoginPage = page(() => import('@/features/auth/LoginPage'), 'LoginPage');
 const SetupPage = page(() => import('@/features/auth/SetupPage'), 'SetupPage');
+const SignupPage = page(() => import('@/features/auth/SignupPage'), 'SignupPage');
+const SubscriptionPage = page(() => import('@/features/subscription/SubscriptionPage'), 'SubscriptionPage');
 const DashboardPage = page(() => import('@/features/dashboard/DashboardPage'), 'DashboardPage');
 const DashboardDetailPage = page(() => import('@/features/dashboard/DashboardDetailPage'), 'DashboardDetailPage');
 const PosPage = page(() => import('@/features/pos/PosPage'), 'PosPage');
@@ -68,6 +70,26 @@ const router = createBrowserRouter([
           <LoginPage />
         </Suspense>
       </GuestRoute>
+    ),
+  },
+  {
+    path: '/signup',
+    element: (
+      <GuestRoute>
+        <Suspense fallback={<FullScreenLoader />}>
+          <SignupPage />
+        </Suspense>
+      </GuestRoute>
+    ),
+  },
+  {
+    path: '/subscription',
+    element: (
+      <PlanRoute>
+        <Suspense fallback={<FullScreenLoader />}>
+          <SubscriptionPage />
+        </Suspense>
+      </PlanRoute>
     ),
   },
   {

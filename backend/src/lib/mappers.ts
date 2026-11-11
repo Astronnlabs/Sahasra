@@ -1,6 +1,7 @@
 import type { Customer, Employee, Purchase, PurchaseItem, Sale, SaleItem, Tenant, Ticket, TicketMessage, User, Vendor } from '@prisma/client';
 import { normaliseAccess } from './access.js';
 import { num, plain } from './serialize.js';
+import { planState } from './subscription.js';
 
 const DAY = 864e5;
 
@@ -41,6 +42,8 @@ export function tenantOut(t: Tenant, users = 0) {
     astronLabsService: t.astronLabsService || undefined,
     planValidFrom: p.planValidFrom ?? undefined,
     planValidTo: p.planValidTo ?? undefined,
+    selfSignup: t.selfSignup || undefined,
+    planPeriod: t.planPeriod ?? undefined,
   };
 }
 
@@ -64,6 +67,8 @@ export function workspaceOut(t: Tenant) {
     planValidTo: t.planValidTo?.toISOString() ?? null,
     /** When under Astron Labs services, billing is free and labelled accordingly. */
     billingLabel: t.astronLabsService ? 'Astron Labs Services (Free)' : undefined,
+    /** Online plan (Build): validity and whether the software is locked until it is paid. */
+    subscription: planState(t),
   };
 }
 

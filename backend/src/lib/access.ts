@@ -126,5 +126,5 @@ export const BUSINESS_TYPES = ['restaurant', 'hotel', 'salon', 'grocery', 'stati
 /** Older type ids still stored for some businesses; they use the general setup. */
 export const LEGACY_BUSINESS_TYPES = ['retail', 'service', 'wholesale'] as const;
 export const ANY_BUSINESS_TYPE = [...BUSINESS_TYPES, ...LEGACY_BUSINESS_TYPES] as const;
-export const PLAN_PRICE: Record<string, number> = { trial: 0, starter: 799, growth: 1999, enterprise: 4999, astron_labs: 0 };
-export const PLANS = ['trial', 'starter', 'growth', 'enterprise', 'astron_labs'] as const;
+export const PLAN_PRICE: Record<string, number> = { trial: 0, build: 1, starter: 799, growth: 1999, enterprise: 4999, astron_labs: 0 };
+export const PLANS = ['trial', 'build', 'starter', 'growth', 'enterprise', 'astron_labs'] as const;

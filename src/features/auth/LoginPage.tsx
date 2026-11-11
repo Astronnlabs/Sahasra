@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Eye, EyeOff, KeyRound, Lock, Mail, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useTheme } from '@/app/providers/ThemeProvider';
@@ -163,7 +163,10 @@ export function LoginPage() {
             </div>
 
             <p className="mt-6 text-center text-[13px] text-muted-foreground">
-              New to Sahasra? Contact the Sahasra team to set up your business account.
+              New to Sahasra?{' '}
+              <Link to="/signup" className="font-medium text-primary hover:underline">
+                Create your account
+              </Link>
             </p>
           </div>
         </main>

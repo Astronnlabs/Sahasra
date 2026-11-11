@@ -20,8 +20,8 @@ export const PERMISSION_MODULES = [
 ];
 
 /** Subscription plans. */
-export const PLAN_PRICE: Record<Plan, number> = { trial: 0, starter: 799, growth: 1999, enterprise: 4999, astron_labs: 0 };
-export const PLAN_LABEL: Record<Plan, string> = { trial: 'Free trial', starter: 'Starter', growth: 'Growth', enterprise: 'Enterprise', astron_labs: 'Astron Labs Services' };
+export const PLAN_PRICE: Record<Plan, number> = { trial: 0, build: 1, starter: 799, growth: 1999, enterprise: 4999, astron_labs: 0 };
+export const PLAN_LABEL: Record<Plan, string> = { trial: 'Free trial', build: 'Build', starter: 'Starter', growth: 'Growth', enterprise: 'Enterprise', astron_labs: 'Astron Labs Services' };
 
 /** Suggestions for city fields (free text is also accepted). */
 export const CITIES = ['Mumbai', 'Pune', 'Bengaluru', 'Hyderabad', 'Chennai', 'Ahmedabad', 'Jaipur', 'Kochi', 'Lucknow', 'Indore', 'Nagpur', 'Delhi', 'Surat', 'Kolkata', 'Bhopal', 'Coimbatore'];

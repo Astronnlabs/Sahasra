@@ -78,7 +78,8 @@ type ProfileValues = z.infer<typeof profileSchema>;
 
 export function BusinessProfile() {
   const ws = useWorkspace();
-  const { refresh, hasPermission } = useAuth();
+  const { refresh, hasPermission, me } = useAuth();
+  const sub = me?.workspace?.subscription;
   const canEdit = hasPermission('Settings', 'edit');
   const details = useQuery({ queryKey: ['workspace', 'details'], queryFn: workspaceService.get });
   const { register, handleSubmit, formState: { errors, isDirty }, reset } = useForm<ProfileValues>({ resolver: zodResolver(profileSchema) });
@@ -215,10 +216,17 @@ export function BusinessProfile() {
                   {ws.plan ? PLAN_LABEL[ws.plan] : 'Free'} Plan
                   {ws.plan && PLAN_PRICE[ws.plan] ? ` · ₹${PLAN_PRICE[ws.plan]}/month` : ' · Free'}
                 </p>
-                <p className="text-xs text-muted-foreground">Standard subscription</p>
+                <p className="text-xs text-muted-foreground">
+                  {sub?.validTo ? `${sub.active ? 'Valid until' : 'Expired on'} ${formatDate(sub.validTo)}` : 'Standard subscription'}
+                </p>
               </div>
             </div>
-            <Badge tone="neutral">{ws.status === 'active' ? 'Active' : ws.status}</Badge>
+            <div className="flex items-center gap-2">
+              <Badge tone="neutral">{ws.status === 'active' ? 'Active' : ws.status}</Badge>
+              <Button asChild size="sm" variant="secondary">
+                <Link to="/subscription">{sub?.active ? 'Renew plan' : 'Buy plan'}</Link>
+              </Button>
+            </div>
           </div>
         )}
       </Section>

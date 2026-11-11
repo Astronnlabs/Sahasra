@@ -27,6 +27,7 @@ as_app npm ci --include=dev --no-audit --no-fund --loglevel=error
 as_app npm run build --silent
 
 echo "== database changes"
+cd $APP/backend
 DATABASE_URL=$(grep -E '^DATABASE_URL=' $ENV | cut -d= -f2- | sed 's/^"//; s/"$//')
 as_app env DATABASE_URL="$DATABASE_URL" npx prisma migrate deploy
 

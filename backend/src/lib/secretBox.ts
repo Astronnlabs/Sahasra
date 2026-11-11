@@ -3,7 +3,7 @@ import { config } from '../config.js';
 import { HttpError } from './http.js';
 
 /**
- * AES-256-GCM encryption for secrets stored in the database (WhatsApp access tokens).
+ * AES-256-GCM encryption for secrets stored in the database (VAAHAK connection keys).
  * Stored as "v1.<iv>.<tag>.<ciphertext>" (base64url parts).
  */
 function key() {

@@ -8,16 +8,10 @@ const schema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   APP_ORIGIN: z.string().url().default('http://localhost:5173'),
   UPLOAD_DIR: z.string().default('./uploads'),
-  /** 32 random bytes, base64. Encrypts each business's WhatsApp access token. */
+  /** 32 random bytes, base64. Encrypts each business's VAAHAK connection key. */
   TOKEN_ENCRYPTION_KEY: z.string().optional(),
-  /** Meta Graph API version used for WhatsApp Cloud API calls. */
-  META_GRAPH_VERSION: z.string().default('v26.0'),
-  /** Wallet deduction (₹) for each bill sent on WhatsApp. */
-  EBILL_PRICE: z.coerce.number().positive().max(100).default(0.25),
-  /** PayU merchant credentials (wallet recharge). Server-side only. */
-  PAYU_KEY: z.string().optional(),
-  PAYU_SALT: z.string().optional(),
-  PAYU_MODE: z.enum(['live', 'test']).default('live'),
+  /** VAAHAK API (sends e-bills on WhatsApp and charges the business's VAAHAK wallet). */
+  VAAHAK_API_URL: z.string().url().default('https://vaahak.onrender.com'),
 });
 
 const parsed = schema.safeParse(process.env);

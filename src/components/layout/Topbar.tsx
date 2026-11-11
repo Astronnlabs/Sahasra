@@ -39,7 +39,6 @@ import { BRANCHES } from '@/app/config/constants';
 import { LogoMark } from './Logo';
 import { NotificationsPopover } from './NotificationsPopover';
 import { PrinterStatus } from './PrinterStatus';
-import { WalletButton } from './WalletButton';
 import { REFERRAL_REWARD } from '@/features/referrals/referralMeta';
 import { usePageAccess } from '@/hooks/usePageAccess';
 
@@ -195,7 +194,6 @@ export function Topbar({ onOpenSearch, onOpenMobileNav, onOpenShortcuts }: Topba
             </Button>
           </Tooltip>
         )}
-        {can('settings') && <WalletButton />}
         <PrinterStatus />
         <NotificationsPopover />
 

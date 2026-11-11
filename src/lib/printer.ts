@@ -101,7 +101,13 @@ export const isPrintable = (s: PrinterState) => s === 'ready' || s === 'printing
 /** Thrown when the computer has no printer service, so callers quietly use the print window. */
 export class NoPrinterService extends Error {}
 
+/** Phones and tablets: the Print Helper is a computer program, so they always use the print dialog. */
+export const isMobileDevice = () =>
+  typeof navigator !== 'undefined' &&
+  (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
 async function serviceFetch<T>(path: string, init?: RequestInit, timeoutMs = 3000): Promise<T> {
+  if (isMobileDevice()) throw new NoPrinterService('Printer not connected');
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   let res: Response;

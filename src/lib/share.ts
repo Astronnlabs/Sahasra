@@ -6,47 +6,76 @@ export function openWhatsApp(phone: string | undefined, text: string) {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
+const PRINT_ROOT = 'sahasra-print-root';
+const PRINT_STYLE = `
+#${PRINT_ROOT}{display:none}
+@media print{
+  @page{margin:6mm}
+  html,body{background:#fff!important;height:auto!important;overflow:visible!important;margin:0!important;padding:0!important}
+  body.sahasra-printing>*:not(#${PRINT_ROOT}){display:none!important}
+  body.sahasra-printing #${PRINT_ROOT}{display:block!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #${PRINT_ROOT},#${PRINT_ROOT} *{visibility:visible!important}
+  #${PRINT_ROOT} .print-area{position:static!important}
+  #${PRINT_ROOT}>*{box-shadow:none!important;border-radius:0!important;margin:0 auto!important}
+}`;
+
 /**
- * Prints an element in a separate window using the app's own styles.
- * The browser's print dialog can also save it as PDF.
+ * Prints an element with the browser's print dialog (which can also save it as PDF).
+ * The bill is printed from this same page rather than a pop-up window, so it works on phones
+ * and tablets (Android and iPhone print to any printer the phone can reach, or to PDF)
+ * and is never stopped by a pop-up blocker.
  */
 export function printElement(el: HTMLElement, title: string) {
-  // Open the window straight away (before any await) so pop-up blockers allow it.
-  const w = window.open('', '_blank', 'width=900,height=1000');
-  if (!w) return false;
-  const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
-    .map((n) => n.outerHTML)
-    .join('\n');
-  const safeTitle = title.replace(/[<>&"]/g, '');
-
   void (async () => {
     const html = await withEmbeddedImages(el);
-    if (w.closed) return;
-    // <base> lets anything not embedded still load. The app's own print rule hides everything
-    // except `.print-area`; in this window the bill is the only content, so show it all.
-    w.document.write(
-      `<!doctype html><html><head><meta charset="utf-8"><base href="${window.location.origin}/"><title>${safeTitle}</title>${styles}<style>html,body{background:#fff!important;margin:0}body{padding:24px;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:8mm}@media print{body{padding:0}body *{visibility:visible!important}.print-area{position:static!important}body>*{box-shadow:none!important;border-radius:0!important;margin:0 auto!important}}</style></head><body>${html}</body></html>`,
-    );
-    w.document.close();
-    // Print only once stylesheets and every picture have finished (or given up) loading.
-    await new Promise<void>((resolve) => (w.document.readyState === 'complete' ? resolve() : w.addEventListener('load', () => resolve(), { once: true })));
+
+    let style = document.getElementById(`${PRINT_ROOT}-style`);
+    if (!style) {
+      style = document.createElement('style');
+      style.id = `${PRINT_ROOT}-style`;
+      style.textContent = PRINT_STYLE;
+      document.head.appendChild(style);
+    }
+    document.getElementById(PRINT_ROOT)?.remove();
+    const root = document.createElement('div');
+    root.id = PRINT_ROOT;
+    root.innerHTML = html;
+    document.body.appendChild(root);
+
+    // Print only once every picture has finished (or given up) loading.
     await Promise.race([
       Promise.all(
-        Array.from(w.document.images).map((img) =>
+        Array.from(root.querySelectorAll('img')).map((img) =>
           img.complete
             ? null
             : new Promise((r) => {
-                img.addEventListener('load', r);
-                img.addEventListener('error', r);
+                img.addEventListener('load', r, { once: true });
+                img.addEventListener('error', r, { once: true });
               }),
         ),
       ),
       new Promise((r) => setTimeout(r, 5000)),
     ]);
+
+    // The page title becomes the PDF's file name.
+    const oldTitle = document.title;
+    document.title = title.replace(/[<>&"]/g, '');
+    document.body.classList.add('sahasra-printing');
+    let done = false;
+    const cleanup = () => {
+      if (done || !root.isConnected) return;
+      done = true;
+      document.title = oldTitle;
+      document.body.classList.remove('sahasra-printing');
+      root.remove();
+    };
+    window.addEventListener('afterprint', () => setTimeout(cleanup, 300), { once: true });
     setTimeout(() => {
-      w.focus();
-      w.print();
-    }, 150);
+      window.print();
+      // Phones may return from print() before the dialog closes; the bill stays hidden on screen,
+      // so it is simply removed later (or replaced by the next print).
+      setTimeout(cleanup, 60_000);
+    }, 100);
   })();
   return true;
 }

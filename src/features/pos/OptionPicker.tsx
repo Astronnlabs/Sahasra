@@ -13,18 +13,21 @@ type NewLine = Omit<CartLine, 'key' | 'qty' | 'discountPct' | 'price'>;
 export function OptionPicker({ product, optionLabel, onClose, onAdd }: { product: Product | null; optionLabel: string; onClose: () => void; onAdd: (line: NewLine) => void }) {
   // '' = the item's regular price (no option).
   const [option, setOption] = useState('');
-  const [addons, setAddons] = useState<string[]>([]);
+  const [selected, setSelected] = useState<number[]>([]);
 
   useEffect(() => {
     if (!product) return;
     setOption(product.options[0]?.name ?? '');
-    setAddons([]);
+    setSelected([]);
   }, [product]);
 
   if (!product) return <Modal open={false} onOpenChange={() => onClose()} title="" />;
 
   const chosen = product.options.find((o) => o.name === option);
-  const addonTotal = product.addons.filter((a) => addons.includes(a.name)).reduce((s, a) => s + a.price, 0);
+  // Add-ons are picked by position: two can share a name (Campa ₹10 / Campa ₹20).
+  const picked = product.addons.filter((_, i) => selected.includes(i));
+  const addonTotal = picked.reduce((s, a) => s + a.price, 0);
+  const addons = picked.map((a) => (product.addons.filter((x) => x.name.trim().toLowerCase() === a.name.trim().toLowerCase()).length > 1 ? `${a.name} ${formatINR(a.price)}` : a.name));
   const base = chosen ? chosen.price : product.sellingPrice;
   const price = base + addonTotal;
   const name = `${product.name}${chosen ? ` (${chosen.name})` : ''}${addons.length ? ` + ${addons.join(', ')}` : ''}`;
@@ -95,14 +98,14 @@ export function OptionPicker({ product, optionLabel, onClose, onAdd }: { product
           <section>
             <p className="mb-2 text-xs font-medium">Add-ons</p>
             <div className="space-y-1.5">
-              {product.addons.map((a) => {
-                const on = addons.includes(a.name);
+              {product.addons.map((a, i) => {
+                const on = selected.includes(i);
                 return (
                   <button
-                    key={a.name}
+                    key={`${i}-${a.name}`}
                     type="button"
                     aria-pressed={on}
-                    onClick={() => setAddons((list) => (on ? list.filter((x) => x !== a.name) : [...list, a.name]))}
+                    onClick={() => setSelected((list) => (on ? list.filter((x) => x !== i) : [...list, i]))}
                     className={cn('flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left text-[13px]', on ? 'border-primary bg-primary-soft' : 'border-border hover:bg-surface')}
                   >
                     <span className={cn('flex h-4 w-4 items-center justify-center rounded border', on ? 'border-primary bg-primary text-white' : 'border-border')}>{on && <Check className="h-3 w-3" />}</span>

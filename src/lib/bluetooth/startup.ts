@@ -1,6 +1,6 @@
 import { bluetoothIdOf, getPrinterSettings } from '@/lib/printer';
 import { inNativeApp, installNativeDownloads, onNativeEvent } from './native';
-import { autoConnectSaved } from './printers';
+import { startAutoReconnect } from './printers';
 
 /**
  * Runs once when the app starts:
@@ -16,7 +16,9 @@ export function startPrinting() {
       if (e.event === 'print-finished') window.dispatchEvent(new Event('afterprint'));
     });
   }
-  const s = getPrinterSettings();
-  const preferred = [bluetoothIdOf(s.bill.printer), bluetoothIdOf(s.kot.printer)].filter((x): x is string => !!x);
-  if (preferred.length) setTimeout(() => autoConnectSaved(preferred), 1500);
+  // Saved printers reconnect by themselves whenever they are switched on (bill printer first).
+  startAutoReconnect(() => {
+    const s = getPrinterSettings();
+    return [bluetoothIdOf(s.bill.printer), bluetoothIdOf(s.kot.printer)].filter((x): x is string => !!x);
+  });
 }

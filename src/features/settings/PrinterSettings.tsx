@@ -149,7 +149,7 @@ export function PrinterSettings() {
   const usedFor = (name: string, job: PrintJob) => (s.all[job].printer ? s.all[job].printer === name : !!s.printers.find((p) => p.name === name)?.isDefault);
   // Phones and tablets have no Windows printer service: Bluetooth printers come first there.
   const mobile = isMobileDevice();
-  const bluetooth = <BluetoothPrinters settings={s.all} hasKot={hasKot} />;
+  const bluetooth = <BluetoothPrinters settings={s.all} hasKot={hasKot} computerConnected={s.connected} />;
 
   return (
     <Section title="Printer" description="Choose which printer prints what on this device. Each billing counter, phone or tablet can have its own printers.">

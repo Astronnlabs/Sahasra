@@ -57,7 +57,7 @@ async function testPrint(p: SavedPrinter) {
   }
 }
 
-export function BluetoothPrinters({ settings, hasKot }: { settings: PrinterSettings; hasKot: boolean }) {
+export function BluetoothPrinters({ settings, hasKot, computerConnected }: { settings: PrinterSettings; hasKot: boolean; computerConnected: boolean }) {
   const { printers, conns } = useBluetoothPrinters();
   const [mode] = useState(bluetoothMode);
   const [adding, setAdding] = useState(false);
@@ -93,7 +93,8 @@ export function BluetoothPrinters({ settings, hasKot }: { settings: PrinterSetti
   /** A newly added printer becomes the bill printer when this device has none (e.g. a phone). */
   const onAdded = (p: SavedPrinter) => {
     setAdding(false);
-    const noBillPrinter = !settings.bill.printer && (isMobileDevice() || inNativeApp());
+    // Not when a computer printer (SAHAASRA Printer for Windows) already prints the bills.
+    const noBillPrinter = !settings.bill.printer && (isMobileDevice() || inNativeApp() || !computerConnected);
     if (noBillPrinter) {
       savePrinterSettings({ ...settings, bill: { ...settings.bill, printer: bluetoothChoice(p.id) } });
       toast.success(`${p.name} added and set as the bill printer`, { description: 'Print a test page to check the paper width.' });

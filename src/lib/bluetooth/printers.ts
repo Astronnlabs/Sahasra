@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { toast } from '@/components/ui/toast';
 import type { PrinterEncoding } from '@/lib/escpos/encoding';
 import type { Density } from '@/lib/escpos/raster';
 import type { ReceiptOptions } from '@/lib/escpos/receipt';
@@ -197,29 +198,78 @@ function wireNative() {
   });
 }
 
-function scheduleReconnect(id: string, firstDelay = 3000) {
+/** Message shown while a saved printer is off or out of range. */
+const WAITING = 'Waiting for the printer — connects by itself when it is switched on';
+
+/** One quick reconnect attempt soon after a printer drops out (the watcher keeps trying after that). */
+function scheduleReconnect(id: string, delay = 3000) {
   const p = getPrinter(id);
   if (!p?.autoReconnect || userClosed.has(id)) return;
   clearTimeout(retryTimers.get(id));
-  // A few attempts (3 s, 10 s, 30 s) — then the printer reconnects when the next bill is printed.
-  const delays = [firstDelay, 10000, 30000];
-  const attempt = (n: number) => {
-    retryTimers.set(
-      id,
-      setTimeout(async () => {
-        const c = connOf(id).state;
-        if (c === 'connected' || c === 'printing' || c === 'connecting' || userClosed.has(id) || !getPrinter(id)) return;
-        // In the app only one printer is connected at a time; don't steal the connection from another one.
-        if (p.protocol !== 'web-le' && nativeActive && nativeActive !== id) return;
-        try {
-          await connectPrinter(id, { quiet: true });
-        } catch {
-          if (n + 1 < delays.length) attempt(n + 1);
-        }
-      }, delays[n]),
-    );
+  retryTimers.set(id, setTimeout(() => void tryReconnect(id), delay));
+}
+
+/** Printers the browser can no longer reach without a tap (Chrome after a page reload). */
+const needsTap = new Set<string>();
+
+async function tryReconnect(id: string) {
+  const p = getPrinter(id);
+  if (!p?.autoReconnect || userClosed.has(id) || needsTap.has(id) || connecting.has(id)) return;
+  const c = connOf(id).state;
+  if (c === 'connected' || c === 'printing' || c === 'connecting') return;
+  const mode = bluetoothMode();
+  if (p.protocol === 'web-le' ? mode === 'none' : mode !== 'native') return;
+  // In the app only one printer is connected at a time; don't take the connection from another one.
+  if (p.protocol !== 'web-le' && nativeActive && nativeActive !== id) return;
+  try {
+    await connectPrinter(id, { quiet: true });
+  } catch (e) {
+    if (e instanceof NeedsTapError) {
+      needsTap.add(id);
+      // Chrome only lets a website reconnect after a page reload once the user taps (its rule).
+      toast(`Reconnect ${p.name}?`, {
+        description: 'Chrome needs one tap after the page is reloaded. (The SAHAASRA Android app reconnects by itself.)',
+        duration: 30000,
+        action: {
+          label: 'Reconnect',
+          onClick: () => {
+            reselectWebPrinter(id).then(
+              () => toast.success(`${p.name} connected`),
+              (err) => toast.error(err instanceof Error ? err.message : 'Could not connect.'),
+            );
+          },
+        },
+      });
+    }
+  }
+}
+
+let watcher: ReturnType<typeof setInterval> | null = null;
+
+/**
+ * Keeps saved printers connected: every few seconds a printer that is off or out of range is
+ * tried again, so it reconnects by itself as soon as it is switched on. The printers chosen for
+ * bills / KOT come first. A printer the user disconnected is left alone until Connect is tapped.
+ */
+export function startAutoReconnect(preferred: () => string[]) {
+  if (watcher || typeof window === 'undefined') return;
+  if (inNativeApp()) wireNative();
+  const tick = () => {
+    if (document.visibilityState === 'hidden' && !inNativeApp()) return;
+    const order = [...new Set([...preferred(), ...printers.map((p) => p.id)])];
+    // The app holds one Bluetooth connection: only the most important printer is kept connected.
+    const candidates = order.map(getPrinter).filter((p): p is SavedPrinter => !!p && p.autoReconnect);
+    const native = candidates.filter((p) => p.protocol !== 'web-le');
+    const web = candidates.filter((p) => p.protocol === 'web-le');
+    if (native[0] && !nativeActive) void tryReconnect(native[0].id);
+    for (const p of web) void tryReconnect(p.id);
   };
-  attempt(0);
+  setTimeout(tick, 1500);
+  // A Classic connect attempt to a switched-off printer takes ~15 s, so the app checks less often.
+  watcher = setInterval(tick, inNativeApp() ? 20000 : 8000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') tick();
+  });
 }
 
 /**
@@ -232,22 +282,25 @@ export function connectPrinter(id: string, opts: { quiet?: boolean } = {}): Prom
   const p = getPrinter(id);
   if (!p) return Promise.reject(new Error('This printer is no longer saved.'));
   userClosed.delete(id);
+  if (!opts.quiet) needsTap.delete(id);
   const run = (async () => {
-    const before = connOf(id);
-    if (!opts.quiet || before.state !== 'error') setConn(id, { state: 'connecting' });
+    // Background attempts don't flash "Connecting…" every few seconds.
+    if (!opts.quiet) setConn(id, { state: 'connecting' });
     try {
       if (p.protocol === 'web-le') {
         let conn = webConns.get(id);
         if (!conn?.connected) {
-          const device = webDevices.get(id) ?? (p.webId ? await rememberedWebBleDevice(p.webId) : null);
-          if (!device) throw new NeedsTapError('Tap Connect to choose this printer again (the browser forgets it after the page is reloaded).');
-          webDevices.set(id, device);
-          conn = new WebBleConnection(device);
-          conn.onDisconnect = () => {
-            setConn(id, { state: 'disconnected', message: 'Printer disconnected' });
-            scheduleReconnect(id);
-          };
-          webConns.set(id, conn);
+          if (!conn) {
+            const device = webDevices.get(id) ?? (p.webId ? await rememberedWebBleDevice(p.webId) : null);
+            if (!device) throw new NeedsTapError('Tap Connect once to reconnect (the browser asks again after the page is reloaded).');
+            webDevices.set(id, device);
+            conn = new WebBleConnection(device);
+            conn.onDisconnect = () => {
+              setConn(id, { state: 'disconnected', message: WAITING });
+              scheduleReconnect(id);
+            };
+            webConns.set(id, conn);
+          }
           await conn.connect();
         }
       } else {
@@ -259,7 +312,10 @@ export function connectPrinter(id: string, opts: { quiet?: boolean } = {}): Prom
       }
       setConn(id, { state: 'connected' });
     } catch (e) {
-      setConn(id, e instanceof NeedsTapError ? { state: 'disconnected', message: e.message } : { state: 'error', message: friendly(e) });
+      if (e instanceof NeedsTapError) setConn(id, { state: 'disconnected', message: e.message });
+      // A background attempt failing just means the printer is still off: keep waiting quietly.
+      else if (opts.quiet) setConn(id, { state: 'disconnected', message: p.autoReconnect ? WAITING : 'Not connected' });
+      else setConn(id, { state: 'error', message: friendly(e) });
       throw e instanceof NeedsTapError ? e : new Error(friendly(e));
     }
   })().finally(() => connecting.delete(id));
@@ -393,14 +449,4 @@ export async function reselectWebPrinter(id: string) {
   webDevices.set(id, device);
   if (device.id !== p.webId) updatePrinter(id, { webId: device.id });
   await connectPrinter(id);
-}
-
-/** Reconnects saved printers on start-up (auto reconnect), without asking the user anything. */
-export function autoConnectSaved(preferred: string[]) {
-  if (inNativeApp()) wireNative();
-  const mode = bluetoothMode();
-  const usable = (p: SavedPrinter) => p.autoReconnect && ((mode === 'native' && p.protocol !== 'web-le') || (p.protocol === 'web-le' && mode !== 'none'));
-  // The printer chosen for bills (or KOTs) first; the app holds one Bluetooth connection at a time.
-  const first = preferred.map(getPrinter).find((p): p is SavedPrinter => !!p && usable(p));
-  if (first) connectPrinter(first.id, { quiet: true }).catch(() => undefined);
 }

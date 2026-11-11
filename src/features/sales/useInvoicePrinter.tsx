@@ -8,6 +8,7 @@ import { useTemplates } from '@/features/bill-studio/useTemplates';
 import { qk } from '@/hooks/queries';
 import { inNativeApp, nativeSaveFile, nativeShareFile } from '@/lib/bluetooth/native';
 import { getPrinter, receiptOptions, type SavedPrinter } from '@/lib/bluetooth/printers';
+import type { Bitmap } from '@/lib/escpos/builder';
 import { elementToBitmap } from '@/lib/escpos/raster';
 import { invoiceToEscPos, type Seller } from '@/lib/escpos/receipt';
 import { EscPos } from '@/lib/escpos/builder';
@@ -60,10 +61,84 @@ export function useInvoicePrinter() {
   const [failed, setFailed] = useState<{ sale: Sale; message: string } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
-  const saved = job?.sale.seller?.template;
-  const billTemplate: InvoiceTemplate | undefined = saved ? { ...saved, isDefault: false, updatedAt: '' } : defaultTemplate;
+  const designOf = (sale: Sale): InvoiceTemplate | undefined => {
+    const s = sale.seller?.template;
+    return s ? { ...s, isDefault: false, updatedAt: '' } : defaultTemplate;
+  };
+  const billTemplate = job ? designOf(job.sale) : defaultTemplate;
   const btPrinter = job?.mode === 'print' ? bluetoothBillPrinter() : null;
   const template = btPrinter ? receiptTemplate(billTemplate, templates, btPrinter.paper) : billTemplate;
+
+  const sellerOf = (sale: Sale): Seller =>
+    sale.seller ?? {
+      businessName: ws.businessName,
+      address: ws.address,
+      phone: ws.phone,
+      email: ws.email,
+      gstin: ws.gstin,
+      logo: ws.logo ?? '',
+      upiId: String(ws.settings.upiId ?? '').trim(),
+      bankName: String(ws.settings.bankName ?? '').trim(),
+      bankAccount: String(ws.settings.bankAccount ?? '').trim(),
+      bankIfsc: String(ws.settings.bankIfsc ?? '').trim(),
+      bankBranch: String(ws.settings.bankBranch ?? '').trim(),
+    };
+
+  /** Sends a bill to the Bluetooth printer (text receipt, or the given picture of the design). */
+  const sendBluetooth = async (sale: Sale, bt: SavedPrinter, design: InvoiceTemplate, picture: Bitmap | null, reprint?: boolean) => {
+    const customer = sale.customerId ? qc.getQueryData<Customer[]>(qk.customers)?.find((c) => c.id === sale.customerId) : undefined;
+    const fail = (message: string) => {
+      setFailed({ sale, message });
+      toast.error(`${sale.invoiceNo} didn’t print`, {
+        description: message,
+        action: { label: 'Try again', onClick: () => print(sale) },
+        duration: 10000,
+      });
+    };
+    try {
+      const result = await printOnBluetooth({
+        kind: sale.id === 'test' ? 'test' : 'bill',
+        reference: sale.invoiceNo,
+        printerId: bt.id,
+        copies: getPrinterSettings().bill.copies,
+        reprint,
+        build: async () => {
+          if (picture) {
+            const p = new EscPos(bt.encoding).init().image(picture).feed(bt.cut ? 2 : 4);
+            if (bt.cut) p.cut();
+            return p.build();
+          }
+          return invoiceToEscPos(design, saleToInvoiceData(sale, customer), sellerOf(sale), receiptOptions(bt));
+        },
+      });
+      if (result.status === 'printed') {
+        setFailed(null);
+        toast.success(`${sale.invoiceNo} printed on ${bt.name}`);
+      } else if (result.status === 'cancelled') {
+        toast.info(`${sale.invoiceNo}: printing cancelled`);
+      } else {
+        fail(result.error ?? 'The printer did not print.');
+      }
+    } catch (e) {
+      if (e instanceof DuplicateJobError) toast.info(e.message);
+      else fail(e instanceof Error ? e.message : 'Could not print.');
+    }
+  };
+
+  /**
+   * Print. With a Bluetooth printer in the fast text style the receipt is built and sent at once —
+   * no waiting for the bill to be drawn on screen.
+   */
+  const print = (sale: Sale, reprint?: boolean) => {
+    setFailed(null);
+    const bt = bluetoothBillPrinter();
+    if (bt && bt.style === 'text') {
+      const design = receiptTemplate(designOf(sale), templates, bt.paper);
+      void sendBluetooth(sale, bt, design, null, reprint);
+      return;
+    }
+    setJob({ sale, mode: 'print', reprint });
+  };
 
   useEffect(() => {
     if (!job || !template) return;
@@ -76,7 +151,6 @@ export function useInvoicePrinter() {
       const dialog = () => {
         if (!printElement(el, `Invoice ${sale.invoiceNo}`)) toast.error('Allow pop-ups for this site to print invoices.');
       };
-      const customer = sale.customerId ? qc.getQueryData<Customer[]>(qk.customers)?.find((c) => c.id === sale.customerId) : undefined;
       const fail = (message: string) => {
         setFailed({ sale, message });
         toast.error(`${sale.invoiceNo} didn’t print`, {
@@ -89,52 +163,14 @@ export function useInvoicePrinter() {
       if (job.mode === 'dialog') {
         dialog();
       } else if (job.mode === 'print' && btPrinter) {
-        const bt = btPrinter;
+        // Exact-design style: the rendered bill is turned into a picture first.
         try {
-          const seller: Seller = sale.seller ?? {
-            businessName: ws.businessName,
-            address: ws.address,
-            phone: ws.phone,
-            email: ws.email,
-            gstin: ws.gstin,
-            logo: ws.logo ?? '',
-            upiId: String(ws.settings.upiId ?? '').trim(),
-            bankName: String(ws.settings.bankName ?? '').trim(),
-            bankAccount: String(ws.settings.bankAccount ?? '').trim(),
-            bankIfsc: String(ws.settings.bankIfsc ?? '').trim(),
-            bankBranch: String(ws.settings.bankBranch ?? '').trim(),
-          };
-          const data = saleToInvoiceData(sale, customer);
-          // The picture style needs the rendered bill now, before the element is removed.
-          const picture = bt.style === 'image' ? await elementToBitmap(el, bt.dots, bt.density) : null;
+          const picture = await elementToBitmap(el, btPrinter.dots, btPrinter.density);
           // The bill is ready: the screen is free while the printer works (progress shows at the bottom).
           setJob((current) => (current === job ? null : current));
-          const result = await printOnBluetooth({
-            kind: sale.id === 'test' ? 'test' : 'bill',
-            reference: sale.invoiceNo,
-            printerId: bt.id,
-            copies: settings.copies,
-            reprint: job.reprint,
-            build: async () => {
-              if (picture) {
-                const p = new EscPos(bt.encoding).init().image(picture).feed(bt.cut ? 2 : 4);
-                if (bt.cut) p.cut();
-                return p.build();
-              }
-              return invoiceToEscPos(template, data, seller, receiptOptions(bt));
-            },
-          });
-          if (result.status === 'printed') {
-            setFailed(null);
-            toast.success(`${sale.invoiceNo} printed on ${bt.name}`);
-          } else if (result.status === 'cancelled') {
-            toast.info(`${sale.invoiceNo}: printing cancelled`);
-          } else {
-            fail(result.error ?? 'The printer did not print.');
-          }
+          await sendBluetooth(sale, btPrinter, template, picture, job.reprint);
         } catch (e) {
-          if (e instanceof DuplicateJobError) toast.info(e.message);
-          else fail(e instanceof Error ? e.message : 'Could not print.');
+          fail(e instanceof Error ? e.message : 'Could not print.');
         } finally {
           setJob((current) => (current === job ? null : current));
         }
@@ -218,15 +254,9 @@ export function useInvoicePrinter() {
     ) : null;
 
   return {
-    print: (sale: Sale) => {
-      setFailed(null);
-      setJob({ sale, mode: 'print' });
-    },
+    print: (sale: Sale) => print(sale),
     /** Prints a bill that was already printed (marked as a reprint in the print history). */
-    printAgain: (sale: Sale) => {
-      setFailed(null);
-      setJob({ sale, mode: 'print', reprint: true });
-    },
+    printAgain: (sale: Sale) => print(sale, true),
     /** Why the last direct print failed (null when it worked). */
     failed,
     /** Prints the failed bill through the browser's print dialog instead. */

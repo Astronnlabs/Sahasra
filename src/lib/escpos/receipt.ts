@@ -181,6 +181,22 @@ class ReceiptWriter {
   }
 }
 
+/** The logo as printer dots, made once and reused, so every bill after the first prints at once. */
+const logoCache = new Map<string, Promise<Bitmap | null>>();
+function logoBitmap(url: string, maxDots: number, paperDots: number, align: Alignment, density: Density) {
+  const key = [url, maxDots, paperDots, align, density].join('|');
+  let hit = logoCache.get(key);
+  if (!hit) {
+    hit = loadImage(url).then((img) => (img && 'width' in img ? pictureToBitmap(img as ImageBitmap, { maxDots, paperDots, align, density }) : null));
+    logoCache.set(key, hit);
+    // A logo that failed to load is tried again next time.
+    void hit.then((b) => {
+      if (!b) logoCache.delete(key);
+    });
+  }
+  return hit;
+}
+
 const sizeFor = (fontSize: number, text: string, cols: number): { w: number; h: number } => {
   if (fontSize >= 14) return text.length <= cols / 2 ? { w: 2, h: 2 } : { w: 1, h: 2 };
   return { w: 1, h: 1 };
@@ -237,8 +253,8 @@ export async function invoiceToEscPos(template: InvoiceTemplate, S: InvoiceData,
     if (p.marginTop >= 14 && el.type !== 'divider') w.feed(1);
     switch (el.type) {
       case 'logo': {
-        const img = seller.logo ? await loadImage(seller.logo) : null;
-        if (img && 'width' in img) w.image(pictureToBitmap(img as ImageBitmap, { maxDots: Math.min(Math.round(o.paperDots * 0.4), Math.round(p.fontSize * 3.6 * 2.4)), paperDots: o.paperDots, align }));
+        const logo = seller.logo ? await logoBitmap(seller.logo, Math.min(Math.round(o.paperDots * 0.4), Math.round(p.fontSize * 3.6 * 2.4)), o.paperDots, align, o.density) : null;
+        if (logo) w.image(logo);
         else if (!nameElsewhere && seller.businessName) w.text(seller.businessName, { align, bold: true, ...sizeFor(16, seller.businessName, w.cols) });
         break;
       }

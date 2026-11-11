@@ -77,8 +77,8 @@ function load(): SavedPrinter[] {
     return (
       raw
         .filter((p) => p && typeof p.id === 'string' && typeof p.name === 'string')
-        // Printers added before v2 used the text style; they now print the exact design too.
-        .map((p) => (p.v === 2 ? p : { ...p, style: 'image' as const, v: 2 }))
+        // Fast text receipts are the default again (the picture style made printing slow).
+        .map((p) => (p.v === 3 ? p : { ...p, style: 'text' as const, v: 3 }))
     );
   } catch {
     return [];
@@ -127,9 +127,9 @@ export function useBluetoothPrinters() {
 const baseSettings = (paper: 58 | 80 = 58) => ({
   paper,
   dots: DOTS_FOR[paper],
-  // Prints exactly what Bill Studio shows (logo, fonts, layout).
-  style: 'image' as const,
-  v: 2,
+  // Instant: a text receipt laid out like the Bill Studio design (logo included).
+  style: 'text' as const,
+  v: 3,
   density: 'normal' as const,
   encoding: 'pc437' as const,
   codes: 'image' as const,

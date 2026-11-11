@@ -63,9 +63,9 @@ export function SuperAdminLayout() {
   const openTickets = tickets?.filter((t) => t.status === 'open').length ?? 0;
 
   const brand = (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 items-center gap-2">
       <Logo />
-      <Badge tone="primary" className="mt-0.5"><ShieldCheck /> Admin</Badge>
+      <Badge tone="primary" className="mt-0.5 shrink-0"><ShieldCheck /> Admin</Badge>
     </div>
   );
 

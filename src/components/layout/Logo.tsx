@@ -19,10 +19,10 @@ export function LogoMark({ className, inverted }: { className?: string; inverted
 
 export function Logo({ className, collapsed, inverted }: { className?: string; collapsed?: boolean; inverted?: boolean }) {
   return (
-    <span className={cn('inline-flex items-center gap-2.5', className)}>
-      <LogoMark inverted={inverted} />
+    <span className={cn('inline-flex min-w-0 items-center gap-2.5', className)}>
+      <LogoMark inverted={inverted} className="shrink-0" />
       {!collapsed && (
-        <span className={cn('text-[17px] font-bold tracking-[0.14em]', inverted ? 'text-white' : 'text-foreground')}>
+        <span className={cn('whitespace-nowrap text-[17px] font-bold tracking-[0.08em]', inverted ? 'text-white' : 'text-foreground')}>
           SAHAASRA
         </span>
       )}

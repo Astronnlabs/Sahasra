@@ -94,12 +94,12 @@ export function LoginPage() {
   if (setup?.needsSetup) return <Navigate to="/setup" replace />;
 
   return (
-    <div className="grid min-h-screen bg-background lg:grid-cols-[1.05fr_1fr]">
+    <div className="grid min-h-screen bg-background lg:h-screen lg:grid-cols-[1.05fr_1fr] lg:overflow-hidden">
       <AuthShowcase />
 
-      <div className="relative flex flex-col">
-        <div className="flex items-center justify-between p-5 sm:p-8">
-          <span className="lg:invisible">
+      <div className="relative flex flex-col lg:h-screen lg:overflow-y-auto">
+        <div className="flex items-center justify-between p-5 sm:p-8 lg:absolute lg:right-0 lg:top-0 lg:p-6">
+          <span className="lg:hidden">
             <Logo />
           </span>
           <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
@@ -107,11 +107,11 @@ export function LoginPage() {
           </Button>
         </div>
 
-        <main className="flex flex-1 items-center justify-center px-5 pb-12 sm:px-8">
+        <main className="flex flex-1 items-center justify-center px-5 pb-10 sm:px-8 lg:py-8">
           <div className="w-full max-w-[420px] animate-fade-up">
-            <div className="rounded-2xl border border-border bg-card p-7 shadow-card sm:p-9">
-              <div className="mb-7">
-                <Logo className="mb-7 hidden lg:inline-flex" />
+            <div className="rounded-2xl border border-border bg-card p-7 shadow-card sm:p-8">
+              <div className="mb-6">
+                <Logo className="mb-6 hidden lg:inline-flex" />
                 <h1 className="text-[26px] font-semibold tracking-[-0.02em]">Welcome back</h1>
                 <p className="mt-1.5 text-[13.5px] text-muted-foreground">Sign in to continue managing your business.</p>
               </div>
@@ -163,13 +163,14 @@ export function LoginPage() {
               </form>
             </div>
 
-            <p className="mt-6 text-center text-[13px] text-muted-foreground">
+            <p className="mt-5 text-center text-[13px] text-muted-foreground">
               New to Sahaasra?{' '}
               <Link to="/signup" className="font-medium text-primary hover:underline">
                 Create your account
               </Link>
             </p>
-            <div className="mt-8 flex justify-center">
+            {/* On large screens the purple panel already shows it. */}
+            <div className="mt-6 flex justify-center lg:hidden">
               <AstronLabsCredit />
             </div>
           </div>

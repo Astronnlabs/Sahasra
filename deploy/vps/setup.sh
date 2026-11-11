@@ -100,8 +100,10 @@ install -m 644 $APP/deploy/vps/sahasra.service /etc/systemd/system/sahasra.servi
 systemctl daemon-reload
 systemctl enable sahasra >/dev/null
 
-install -m 644 $APP/deploy/vps/nginx/sahaasra.in.conf /etc/nginx/sites-available/sahaasra.in.conf
-install -m 644 $APP/deploy/vps/nginx/app.sahaasra.in.conf /etc/nginx/sites-available/app.sahaasra.in.conf
+# Copied only once: certbot adds the https settings to these files afterwards.
+for f in sahaasra.in.conf app.sahaasra.in.conf; do
+  [ -f /etc/nginx/sites-available/$f ] || install -m 644 $APP/deploy/vps/nginx/$f /etc/nginx/sites-available/$f
+done
 ln -sf /etc/nginx/sites-available/sahaasra.in.conf /etc/nginx/sites-enabled/sahaasra.in.conf
 ln -sf /etc/nginx/sites-available/app.sahaasra.in.conf /etc/nginx/sites-enabled/app.sahaasra.in.conf
 rm -f /etc/nginx/sites-enabled/default

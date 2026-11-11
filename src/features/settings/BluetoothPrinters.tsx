@@ -493,10 +493,10 @@ function PrinterSettingsModal({ printer: p, onClose, onRemove }: { printer: Save
               )}
             </NativeSelect>
           </Field>
-          <Field label="Receipt style" hint={p.style === 'text' ? 'Fast and sharp. Follows your Bill Studio design.' : 'An exact picture of your Bill Studio design. Slower.'}>
+          <Field label="Receipt style" hint={p.style === 'text' ? 'Fastest. Uses the printer’s own font; layout follows Bill Studio.' : 'Prints exactly what Bill Studio shows — logo, fonts and layout.'}>
             <NativeSelect value={p.style} onChange={(e) => set({ style: e.target.value as SavedPrinter['style'] })}>
-              <option value="text">Text (recommended)</option>
-              <option value="image">Exact design (picture)</option>
+              <option value="image">Exact design (recommended)</option>
+              <option value="text">Fast text</option>
             </NativeSelect>
           </Field>
           <Field label="Print density">

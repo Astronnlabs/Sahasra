@@ -16,11 +16,61 @@ const FONT: Record<InvoiceTemplate['font'], string> = {
   mono: 'ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace',
 };
 
-function Row({ label, value, strong, accent }: { label: string; value: string; strong?: boolean; accent?: string }) {
+function Row({ label, value, strong, accent, solid }: { label: string; value: string; strong?: boolean; accent?: string; solid?: boolean }) {
   return (
-    <div className="flex justify-between gap-4" style={{ fontWeight: strong ? 700 : undefined, color: strong ? accent : undefined }}>
-      <span style={{ opacity: strong ? 1 : 0.7 }}>{label}</span>
+    <div className="flex justify-between gap-4" style={{ fontWeight: strong ? 700 : undefined, color: strong ? accent : undefined, padding: solid ? '1px 0' : undefined }}>
+      {/* Receipt paper prints only black: no faded labels there. */}
+      <span style={{ opacity: strong || solid ? 1 : 0.7 }}>{label}</span>
       <span className="tabular">{value}</span>
+    </div>
+  );
+}
+
+const RULE = '1px dashed #000';
+const isAddon = (name: string) => name.startsWith('+ ');
+const qtyText = (q: number) => (Number.isInteger(q) ? String(q) : String(Math.round(q * 1000) / 1000));
+
+/**
+ * Items on a receipt roll: the item name on its own line, then "qty × rate" and the amount;
+ * add-ons sit indented under their item on one line ("+ Extra Aloo   ₹10").
+ */
+function ReceiptItems({ items, columns: c, style }: { items: InvoiceData['items']; columns: NonNullable<TemplateElement['props']['columns']>; style: CSSProperties }) {
+  return (
+    <div style={{ ...style, textAlign: 'left' }}>
+      <div className="flex justify-between" style={{ fontWeight: 700, borderBottom: RULE, paddingBottom: 3, marginBottom: 4 }}>
+        <span>Item</span>
+        <span>Amount</span>
+      </div>
+      {items.map((it, idx) => {
+        const amount = formatINR(it.qty * it.rate - it.discount, Math.round((it.qty * it.rate - it.discount) * 100) % 100 !== 0);
+        if (isAddon(it.name)) {
+          return (
+            <div key={idx} className="flex justify-between gap-3" style={{ paddingLeft: 12, marginTop: 1 }}>
+              <span>
+                {it.name}
+                {it.qty !== 1 && ` × ${qtyText(it.qty)}`}
+              </span>
+              <span className="tabular">{amount}</span>
+            </div>
+          );
+        }
+        const details = [
+          c.qty || c.rate ? `${c.qty ? qtyText(it.qty) : ''}${c.qty && c.rate ? ' × ' : ''}${c.rate ? formatINR(it.rate) : ''}` : '',
+          c.discount && it.discount ? `Disc ${formatINR(it.discount)}` : '',
+          c.tax ? `GST ${it.gst}%` : '',
+          c.hsn && it.hsn ? `HSN ${it.hsn}` : '',
+          c.sku && it.sku ? it.sku : '',
+        ].filter(Boolean);
+        return (
+          <div key={idx} style={{ marginTop: idx ? 5 : 0 }}>
+            <div style={{ fontWeight: 600, lineHeight: 1.3 }}>{it.name}</div>
+            <div className="flex justify-between gap-3">
+              <span>{details.join(' · ')}</span>
+              <span className="tabular" style={{ fontWeight: 600 }}>{amount}</span>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -42,8 +92,9 @@ function LogoBlock({ logo, name, nameElsewhere, sample, size, accent, style }: {
           alt={name}
           data-fallback-text={fallbackText}
           onError={() => setFailed(true)}
-          style={{ height: size * 3.6, width: size * 3.6 }}
-          className="rounded-lg object-cover"
+          // The whole logo is shown (never cropped), at the height set in the design.
+          style={{ height: size * 3.6, width: 'auto', maxWidth: '100%' }}
+          className="object-contain"
         />
       </div>
     );
@@ -88,17 +139,24 @@ export function ElementView({ el, template }: { el: TemplateElement; template: I
     case 'businessName':
       return block(ws.businessName, { color: p.color ?? template.accent, letterSpacing: '-0.01em', lineHeight: 1.15 });
     case 'businessAddress':
-      return block(<span style={{ opacity: 0.75, whiteSpace: 'pre-line' }}>{ws.address}{`\n`}{ws.phone} · {ws.email}</span>);
+      return block(
+        <span style={{ opacity: thermal ? 1 : 0.75, whiteSpace: 'pre-line', lineHeight: 1.4 }}>
+          {[ws.address, [ws.phone, ws.email].filter(Boolean).join(' · ')].filter(Boolean).join('\n')}
+        </span>,
+      );
     case 'gstin':
       // Unregistered businesses print no GSTIN line.
       if (!ws.gstin && !S.sample) return null;
-      return block(<span><span style={{ opacity: 0.7 }}>GSTIN:</span> <b>{ws.gstin}</b></span>);
+      return block(<span><span style={{ opacity: thermal ? 1 : 0.7 }}>GSTIN:</span> <b>{ws.gstin}</b></span>);
     case 'title':
       return block(p.text ?? 'TAX INVOICE', { letterSpacing: '0.18em', color: p.color ?? template.accent });
     case 'invoiceMeta':
       return block(
         thermal ? (
-          <span>{S.number} · {format(new Date(S.date), 'dd/MM/yyyy HH:mm')}</span>
+          <div style={{ textAlign: 'left' }}>
+            <Row label="Bill No." value={S.number} solid />
+            <Row label="Date" value={format(new Date(S.date), 'dd/MM/yyyy, hh:mm a')} solid />
+          </div>
         ) : (
           <div style={{ display: 'inline-grid', gridTemplateColumns: 'auto auto', columnGap: 16, rowGap: 2, textAlign: 'left' }}>
             <span style={{ opacity: 0.7 }}>Invoice No.</span><b>{S.number}</b>
@@ -107,6 +165,13 @@ export function ElementView({ el, template }: { el: TemplateElement; template: I
         ),
       );
     case 'customer':
+      if (thermal)
+        return block(
+          <div style={{ textAlign: 'left' }}>
+            <Row label="Customer" value={S.customer.name} solid />
+            {S.customer.gstin && <Row label="GSTIN" value={S.customer.gstin} solid />}
+          </div>,
+        );
       return block(
         <div>
           <div style={{ fontSize: '0.8em', fontWeight: 600, letterSpacing: '0.08em', opacity: 0.6 }}>BILL TO</div>
@@ -117,6 +182,7 @@ export function ElementView({ el, template }: { el: TemplateElement; template: I
       );
     case 'itemsTable': {
       const c = p.columns ?? { sku: false, hsn: true, qty: true, rate: true, discount: false, tax: true };
+      if (thermal) return <ReceiptItems items={S.items} columns={c} style={style} />;
       const cell = 'px-1.5 py-1';
       return (
         <table style={{ ...style, width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -135,7 +201,7 @@ export function ElementView({ el, template }: { el: TemplateElement; template: I
           <tbody>
             {S.items.map((it, idx) => (
               <tr key={idx} style={{ borderBottom: `1px ${thermal ? 'dashed #ccc' : 'solid #EFEBF7'}` }}>
-                <td className={cell}>{it.name}</td>
+                <td className={cell} style={isAddon(it.name) ? { paddingLeft: 18, opacity: 0.85 } : undefined}>{it.name}</td>
                 {c.sku && <td className={cell} style={{ opacity: 0.7 }}>{it.sku}</td>}
                 {c.hsn && <td className={cell} style={{ opacity: 0.7 }}>{it.hsn}</td>}
                 {c.qty && <td className={cn(cell, 'text-right')}>{it.qty}</td>}
@@ -153,23 +219,37 @@ export function ElementView({ el, template }: { el: TemplateElement; template: I
       return (
         <div style={{ ...style, display: 'flex', justifyContent: justify }}>
           <div style={{ minWidth: thermal ? '100%' : 220 }}>
-            <Row label="Taxable value" value={money(S.taxable)} />
-            {p.taxMode === 'inter' ? <Row label="IGST" value={money(S.igst || S.cgst + S.sgst)} /> : <><Row label="CGST" value={money(S.cgst)} /><Row label="SGST" value={money(S.sgst)} /></>}
+            <Row label="Taxable value" value={money(S.taxable)} solid={thermal} />
+            {p.taxMode === 'inter' ? (
+              <Row label="IGST" value={money(S.igst || S.cgst + S.sgst)} solid={thermal} />
+            ) : (
+              <>
+                <Row label="CGST" value={money(S.cgst)} solid={thermal} />
+                <Row label="SGST" value={money(S.sgst)} solid={thermal} />
+              </>
+            )}
           </div>
         </div>
       );
     case 'totals':
       return (
         <div style={{ ...style, display: 'flex', justifyContent: justify }}>
-          <div style={{ minWidth: thermal ? '100%' : 220 }}>
-            <Row label="Subtotal" value={money(S.subtotal)} />
-            {S.discount > 0 && <Row label="Discount" value={'− ' + money(S.discount)} />}
-            {gst > 0 && <Row label="GST" value={money(gst)} />}
-            {Math.abs(roundOff) >= 0.01 && <Row label="Round off" value={(roundOff < 0 ? '− ' : '') + money(Math.abs(roundOff))} />}
-            <div style={{ borderTop: `1px ${thermal ? 'dashed' : 'solid'} ${thermal ? '#999' : template.accent}`, marginTop: 4, paddingTop: 4, fontSize: '1.25em' }}>
-              <Row label="Grand Total" value={formatINR(S.total)} strong accent={thermal ? undefined : template.accent} />
-            </div>
-            {S.payment && S.paid > 0 && <Row label={`Paid (${PAYMENT_LABEL[S.payment] ?? S.payment})`} value={money(S.paid)} />}
+          <div style={{ minWidth: thermal ? '100%' : 220, ...(thermal ? { borderTop: RULE, paddingTop: 5 } : {}) }}>
+            <Row label="Subtotal" value={money(S.subtotal)} solid={thermal} />
+            {S.discount > 0 && <Row label="Discount" value={'− ' + money(S.discount)} solid={thermal} />}
+            {gst > 0 && <Row label="GST" value={money(gst)} solid={thermal} />}
+            {Math.abs(roundOff) >= 0.01 && <Row label="Round off" value={(roundOff < 0 ? '− ' : '') + money(Math.abs(roundOff))} solid={thermal} />}
+            {thermal ? (
+              // Receipt: the total stands out between two rules.
+              <div style={{ borderTop: RULE, borderBottom: RULE, margin: '6px 0 4px', padding: '5px 0', fontSize: '1.35em' }}>
+                <Row label="TOTAL" value={formatINR(S.total)} strong />
+              </div>
+            ) : (
+              <div style={{ borderTop: `1px solid ${template.accent}`, marginTop: 4, paddingTop: 4, fontSize: '1.25em' }}>
+                <Row label="Grand Total" value={formatINR(S.total)} strong accent={template.accent} />
+              </div>
+            )}
+            {S.payment && S.paid > 0 && <Row label={`Paid (${PAYMENT_LABEL[S.payment] ?? S.payment})`} value={money(S.paid)} solid={thermal} />}
             {!S.sample && S.payment && due > 0 && <Row label="Balance due" value={money(due)} strong />}
           </div>
         </div>
@@ -228,13 +308,15 @@ export function ElementView({ el, template }: { el: TemplateElement; template: I
         </div>
       );
     case 'footer':
-      return block(<span style={{ opacity: 0.75 }}>{p.text}</span>);
+      return block(<span style={{ opacity: thermal ? 1 : 0.75, whiteSpace: 'pre-line' }}>{p.text}</span>);
     case 'customText':
       return block(<span style={{ whiteSpace: 'pre-line' }}>{p.text}</span>);
     case 'barcode':
       return <div style={{ ...style, display: 'flex', justifyContent: justify }}><Barcode value={S.number} /></div>;
     case 'divider':
-      return <hr style={{ marginTop: p.marginTop, border: 0, borderTop: `1px ${thermal ? 'dashed #999' : `solid ${template.accent}33`}` }} />;
+      // On receipts the totals draw their own rule.
+      if (thermal && template.elements[template.elements.findIndex((e) => e.id === el.id) + 1]?.type === 'totals') return null;
+      return <hr style={{ marginTop: p.marginTop, border: 0, borderTop: thermal ? RULE : `1px solid ${template.accent}33`, marginBottom: thermal ? 2 : 0 }} />;
   }
 }
 

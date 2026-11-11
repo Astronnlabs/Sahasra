@@ -20,7 +20,8 @@ import { useAppMutation } from '@/hooks/queries';
 import { formatDate, formatDateTime, formatINR, timeAgo } from '@/lib/format';
 import { platformTicketsService, platformUsersService, tenantsService } from '@/services';
 import { TempPasswordDialog, type TempLogin } from '@/components/common/TempPasswordDialog';
-import type { Tenant } from '@/types';
+import type { PlatformUser, Tenant } from '@/types';
+import { EditLoginDrawer } from './EditLoginDrawer';
 import { PriorityBadge } from '@/features/support/supportMeta';
 import { BusinessAvatar } from './BusinessAvatar';
 import { PageAccessEditor } from './PageAccessEditor';
@@ -61,6 +62,7 @@ export function BusinessDetailPage() {
   const users = useQuery({ queryKey: [...PK.users, id], queryFn: () => platformUsersService.byTenant(id) });
   const tickets = useQuery({ queryKey: [...PK.tickets, id], queryFn: () => platformTicketsService.byTenant(id) });
   const [login, setLogin] = useState<TempLogin | null>(null);
+  const [editingUser, setEditingUser] = useState<PlatformUser | null>(null);
   const resetOwner = useAppMutation(() => tenantsService.resetOwnerPassword(id), {
     invalidate: [PK.all],
     onSuccess: (r) => setLogin({ name: tenant?.ownerName ?? 'Owner', login: [r.email, r.phone].filter(Boolean).join(' or '), password: r.tempPassword }),
@@ -245,6 +247,7 @@ export function BusinessDetailPage() {
                   <Badge tone={u.role === 'Owner' ? 'primary' : 'neutral'}>{u.role}</Badge>
                   <StatusBadge status={u.status} />
                   <span className="hidden w-28 text-right text-2xs text-subtle sm:block">{u.lastLogin ? `Signed in ${timeAgo(u.lastLogin)}` : 'Never signed in'}</span>
+                  <Button variant="ghost" size="sm" onClick={() => setEditingUser(u)}><Pencil /> Edit login</Button>
                 </li>
               ))}
               {users.data?.length === 0 && <li className="py-10 text-center text-[13px] text-muted-foreground">No users yet.</li>}
@@ -271,6 +274,7 @@ export function BusinessDetailPage() {
 
       <PlanModal tenant={planFor} onClose={() => setPlanFor(null)} />
       <TempPasswordDialog value={login} onClose={() => setLogin(null)} />
+      <EditLoginDrawer user={editingUser} onClose={() => setEditingUser(null)} />
       <ConfirmDialog
         open={suspending}
         onOpenChange={setSuspending}

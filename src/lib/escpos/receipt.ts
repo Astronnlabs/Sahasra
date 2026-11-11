@@ -114,8 +114,10 @@ class ReceiptWriter {
       return;
     }
     this.style({ ...s, align: 'left' });
-    const room = this.cols - r.length - 1;
-    const lines = wrap(l, Math.max(room, 4));
+    // Leading spaces indent the label (add-ons under their item).
+    const indent = /^ */.exec(l)![0];
+    const room = this.cols - r.length - 1 - indent.length;
+    const lines = wrap(l.trimStart(), Math.max(room, 4)).map((x) => indent + x);
     lines.forEach((line, i) => this.p.line(i === lines.length - 1 ? line + ' '.repeat(Math.max(1, this.cols - line.length - r.length)) + r : line));
     this.reset();
   }
@@ -191,46 +193,30 @@ function upiLink(upiId: string, payee: string, amount: number, note: string) {
   return `upi://pay?${qs.toString()}`;
 }
 
-/** Items table laid out for the paper: one line per item on 80 mm, name + details line on 58 mm. */
+/**
+ * Items, as in the receipt design: the name on its own line (bold), then "qty x rate" and the
+ * amount; add-ons ("+ Extra Aloo") indented under their item on one line.
+ */
 function itemsTable(w: ReceiptWriter, el: TemplateElement, S: InvoiceData) {
   const c = el.props.columns ?? { sku: false, hsn: false, qty: true, rate: true, discount: false, tax: false };
-  const wide = w.cols >= 42;
-  if (wide) {
-    const cols = [
-      ...(c.hsn ? [{ key: 'hsn', label: 'HSN', width: 7, align: 'right' as const }] : []),
-      ...(c.qty ? [{ key: 'qty', label: 'Qty', width: 5, align: 'right' as const }] : []),
-      ...(c.rate ? [{ key: 'rate', label: 'Rate', width: 10, align: 'right' as const }] : []),
-      ...(c.discount ? [{ key: 'disc', label: 'Disc', width: 8, align: 'right' as const }] : []),
-      ...(c.tax ? [{ key: 'gst', label: 'GST', width: 5, align: 'right' as const }] : []),
-      { key: 'amt', label: 'Amount', width: 11, align: 'right' as const },
-    ];
-    w.columns([{ text: 'Item', width: 0, align: 'left' }, ...cols.map((x) => ({ text: x.label, width: x.width, align: x.align }))], { bold: true });
-    w.rule();
-    for (const it of S.items) {
-      const v: Record<string, string> = {
-        hsn: it.hsn,
-        qty: num(it.qty),
-        rate: num(it.rate),
-        disc: it.discount ? num(it.discount) : '-',
-        gst: `${it.gst}%`,
-        amt: num(it.qty * it.rate - it.discount),
-      };
-      w.columns([{ text: c.sku && it.sku ? `${it.name} (${it.sku})` : it.name, width: 0, align: 'left' }, ...cols.map((x) => ({ text: v[x.key], width: x.width, align: x.align }))]);
-    }
-    return;
-  }
   w.row('Item', 'Amount', { bold: true });
   w.rule();
-  for (const it of S.items) {
-    w.text(c.sku && it.sku ? `${it.name} (${it.sku})` : it.name);
+  S.items.forEach((it, i) => {
+    const amount = num(it.qty * it.rate - it.discount);
+    if (it.name.startsWith('+ ')) {
+      w.row(`  ${it.name}${it.qty !== 1 ? ` x ${num(it.qty)}` : ''}`, amount);
+      return;
+    }
+    void i;
+    w.text(c.sku && it.sku ? `${it.name} (${it.sku})` : it.name, { bold: true });
     const parts = [
-      c.qty || c.rate ? `${c.qty ? num(it.qty) : ''}${c.qty && c.rate ? ' x ' : ''}${c.rate ? num(it.rate) : ''}` : '',
-      c.discount && it.discount ? `-${num(it.discount)}` : '',
+      c.qty || c.rate ? `${c.qty ? num(it.qty) : ''}${c.qty && c.rate ? ' x ' : ''}${c.rate ? rs(it.rate) : ''}` : '',
+      c.discount && it.discount ? `Disc ${rs(it.discount)}` : '',
       c.tax ? `GST ${it.gst}%` : '',
       c.hsn && it.hsn ? `HSN ${it.hsn}` : '',
     ].filter(Boolean);
-    w.row(`  ${parts.join('  ')}`, num(it.qty * it.rate - it.discount));
-  }
+    w.row(parts.join(' - '), amount);
+  });
 }
 
 /**
@@ -270,12 +256,11 @@ export async function invoiceToEscPos(template: InvoiceTemplate, S: InvoiceData,
         w.text(p.text ?? 'TAX INVOICE', { align, bold: true, ...sizeFor(p.fontSize, p.text ?? '', w.cols) });
         break;
       case 'invoiceMeta':
-        w.row('Bill No.', S.number, { bold: true });
-        w.row('Date', format(new Date(S.date), 'dd/MM/yyyy hh:mm a'));
+        w.row('Bill No.', S.number);
+        w.row('Date', format(new Date(S.date), 'dd/MM/yyyy, hh:mm a'));
         break;
       case 'customer':
-        w.row('Bill to', S.customer.name, { bold: true });
-        if (S.customer.phone) w.row('Phone', S.customer.phone);
+        w.row('Customer', S.customer.name);
         if (S.customer.gstin) w.row('GSTIN', S.customer.gstin);
         break;
       case 'itemsTable':
@@ -290,12 +275,14 @@ export async function invoiceToEscPos(template: InvoiceTemplate, S: InvoiceData,
         }
         break;
       case 'totals':
+        w.rule();
         w.row('Subtotal', rs(S.subtotal));
         if (S.discount > 0) w.row('Discount', `-${rs(S.discount)}`);
         if (gst > 0) w.row('GST', rs(gst));
         if (Math.abs(roundOff) >= 0.01) w.row('Round off', `${roundOff < 0 ? '-' : ''}${rs(Math.abs(roundOff))}`);
         w.rule();
-        w.row('GRAND TOTAL', rs(S.total), { bold: true, h: 2 });
+        w.row('TOTAL', rs(S.total), { bold: true, h: 2 });
+        w.rule();
         if (S.payment && S.paid > 0) w.row(`Paid (${PAYMENT_LABEL[S.payment] ?? S.payment})`, rs(S.paid));
         if (!S.sample && due > 0 && S.payment) w.row('Balance due', rs(due), { bold: true });
         break;
@@ -337,7 +324,8 @@ export async function invoiceToEscPos(template: InvoiceTemplate, S: InvoiceData,
         await w.barcode(S.number, align);
         break;
       case 'divider':
-        w.rule();
+        // The totals draw their own rule.
+        if (template.elements[template.elements.indexOf(el) + 1]?.type !== 'totals') w.rule();
         break;
     }
   }

@@ -36,6 +36,8 @@ export interface SavedPrinter {
   /** Slower, acknowledged transfer for printers that skip lines. */
   safeMode: boolean;
   addedAt: string;
+  /** Settings version (2 = exact-design style by default). */
+  v?: number;
 }
 
 export type ConnState = 'disconnected' | 'connecting' | 'connected' | 'printing' | 'error';
@@ -70,7 +72,13 @@ export function receiptOptions(p: SavedPrinter): ReceiptOptions {
 function load(): SavedPrinter[] {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? '[]') as SavedPrinter[];
-    return Array.isArray(raw) ? raw.filter((p) => p && typeof p.id === 'string' && typeof p.name === 'string') : [];
+    if (!Array.isArray(raw)) return [];
+    return (
+      raw
+        .filter((p) => p && typeof p.id === 'string' && typeof p.name === 'string')
+        // Printers added before v2 used the text style; they now print the exact design too.
+        .map((p) => (p.v === 2 ? p : { ...p, style: 'image' as const, v: 2 }))
+    );
   } catch {
     return [];
   }
@@ -118,7 +126,9 @@ export function useBluetoothPrinters() {
 const baseSettings = (paper: 58 | 80 = 58) => ({
   paper,
   dots: DOTS_FOR[paper],
-  style: 'text' as const,
+  // Prints exactly what Bill Studio shows (logo, fonts, layout).
+  style: 'image' as const,
+  v: 2,
   density: 'normal' as const,
   encoding: 'pc437' as const,
   codes: 'image' as const,

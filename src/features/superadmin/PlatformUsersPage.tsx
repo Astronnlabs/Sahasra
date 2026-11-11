@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { differenceInCalendarDays, parseISO } from 'date-fns';
-import { Ban, KeyRound, Mail, RotateCcw, UserCheck, UserPlus, UsersRound } from 'lucide-react';
+import { Ban, KeyRound, Mail, Pencil, RotateCcw, UserCheck, UserPlus, UsersRound } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
@@ -24,6 +24,7 @@ import { formatDate, formatNumber, timeAgo } from '@/lib/format';
 import { sanitizeText } from '@/lib/sanitize';
 import { platformUsersService, tenantsService } from '@/services';
 import type { PlatformUser } from '@/types';
+import { EditLoginDrawer } from './EditLoginDrawer';
 import { PK } from './platformKeys';
 
 /** Built-in roles every business has (the Owner is created with the business). */
@@ -83,6 +84,7 @@ export function PlatformUsersPage() {
   const defaultTenantId = params.get('business') ?? undefined;
   const [open, setOpen] = useState(!!defaultTenantId);
   const [login, setLogin] = useState<TempLogin | null>(null);
+  const [editing, setEditing] = useState<PlatformUser | null>(null);
   const setStatus = useAppMutation(({ id, status }: { id: string; status: 'active' | 'suspended' }) => platformUsersService.setStatus(id, status), {
     invalidate: [PK.all],
     success: (u) => (u.status === 'suspended' ? `${u.name} suspended and signed out` : `${u.name} reactivated`),
@@ -145,7 +147,8 @@ export function PlatformUsersPage() {
           { id: 'joined', label: 'Join dates', options: [{ value: '1', label: 'Joined today' }, { value: '7', label: 'Last 7 days' }, { value: '30', label: 'Last 30 days' }], predicate: (u, v) => differenceInCalendarDays(new Date(), parseISO(u.createdAt)) < Number(v) },
         ]}
         rowActions={[
-          { label: 'Reset password', icon: KeyRound, onSelect: (u) => resetPassword.mutate(u), hidden: (u) => u.status === 'suspended' },
+          { label: 'Edit login & password', icon: Pencil, onSelect: (u) => setEditing(u) },
+          { label: 'Reset to temporary password', icon: KeyRound, onSelect: (u) => resetPassword.mutate(u), hidden: (u) => u.status === 'suspended' },
           { label: 'Reactivate', icon: RotateCcw, onSelect: (u) => setStatus.mutate({ id: u.id, status: 'active' }), hidden: (u) => u.status !== 'suspended' },
           { label: 'Suspend', icon: Ban, destructive: true, onSelect: (u) => setStatus.mutate({ id: u.id, status: 'suspended' }), hidden: (u) => u.status === 'suspended' },
           del.action,
@@ -154,6 +157,7 @@ export function PlatformUsersPage() {
       />
       <CreateUserDrawer open={open} onOpenChange={(o) => { setOpen(o); if (!o && defaultTenantId) setParams({}, { replace: true }); }} defaultTenantId={defaultTenantId} onCreated={setLogin} />
       <TempPasswordDialog value={login} onClose={() => setLogin(null)} />
+      <EditLoginDrawer user={editing} onClose={() => setEditing(null)} />
       {del.dialog}
     </>
   );

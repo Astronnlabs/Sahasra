@@ -38,6 +38,8 @@ export const platformUsersService = {
   invite: (input: Pick<PlatformUser, 'tenantId' | 'name' | 'email' | 'phone' | 'role'>) => api.post<PlatformUser & { tempPassword: string }>('/platform/users', input),
   setStatus: (id: string, status: 'active' | 'suspended') => api.put<PlatformUser>(`/platform/users/${id}`, { status }),
   resetPassword: (id: string) => api.post<{ tempPassword: string }>(`/platform/users/${id}/reset-password`),
+  /** Name, login email / mobile and (optionally) a new password chosen by the Super Admin. */
+  updateLogin: (id: string, input: { name: string; email: string; phone: string; password?: string }) => api.put<PlatformUser>(`/platform/users/${id}/login`, input),
   remove: (id: string) => api.del<{ id: string }>(`/platform/users/${id}`),
 };
 

@@ -243,7 +243,9 @@ export const PRESET_TEMPLATES: InvoiceTemplate[] = [
     watermark: '',
     isDefault: false,
     updatedAt: now,
-    elements: build('thermal80', ['businessName', 'businessAddress', 'gstin', 'divider', 'title', 'invoiceMeta', 'customer', 'divider', 'itemsTable', 'divider', 'totals', 'taxSummary', 'paymentQr', 'footer', 'barcode']),
+    elements: build('thermal80', ['logo', 'businessName', 'businessAddress', 'gstin', 'divider', 'title', 'invoiceMeta', 'customer', 'divider', 'itemsTable', 'totals', 'taxSummary', 'paymentQr', 'footer', 'barcode'], {
+      logo: { fontSize: 16 },
+    }),
   },
   {
     id: 'tpl_thermal58',
@@ -254,7 +256,10 @@ export const PRESET_TEMPLATES: InvoiceTemplate[] = [
     watermark: '',
     isDefault: false,
     updatedAt: now,
-    elements: build('thermal58', ['businessName', 'gstin', 'invoiceMeta', 'divider', 'itemsTable', 'divider', 'totals', 'footer']),
+    elements: build('thermal58', ['logo', 'businessName', 'businessAddress', 'gstin', 'divider', 'invoiceMeta', 'divider', 'itemsTable', 'totals', 'footer'], {
+      logo: { fontSize: 14 },
+      businessAddress: { fontSize: 10 },
+    }),
   },
 ];
 

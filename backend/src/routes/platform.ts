@@ -277,6 +277,35 @@ platformRouter.post('/platform/users/:id/reset-password', async (req, res) => {
   res.json({ tempPassword });
 });
 
+/**
+ * Super Admin edits any business user's login: name, email, mobile (what they sign in with) and,
+ * optionally, sets a new password. Changing the login or password signs the user out everywhere.
+ */
+platformRouter.put('/platform/users/:id/login', async (req, res) => {
+  const b = z.object({ name: requiredText('Name', 60, 2), email, phone, password: password.optional() }).parse(req.body);
+  const u = await db.user.findUnique({ where: { id: String(req.params.id) } });
+  if (!u || u.role === 'Super Admin') throw notFound('User');
+  await assertLoginFree(b.email, b.phone, u.id);
+  const loginChanged = b.email !== u.email || phoneKey(b.phone) !== u.phoneKey;
+  const updated = await db.user.update({
+    where: { id: u.id },
+    data: {
+      name: b.name,
+      email: b.email,
+      phone: b.phone,
+      phoneKey: phoneKey(b.phone),
+      ...(b.password ? { passwordHash: await hashPassword(b.password) } : {}),
+    },
+    include: { tenant: { select: { name: true } } },
+  });
+  // The business record keeps the owner's contact in step with the owner's login.
+  if (u.role === 'Owner' && u.tenantId) await db.tenant.update({ where: { id: u.tenantId }, data: { ownerName: b.name, ownerEmail: b.email, ownerPhone: b.phone } });
+  if (loginChanged || b.password) await db.session.deleteMany({ where: { userId: u.id } });
+  const what = [b.name !== u.name && 'name', loginChanged && 'login (email / mobile)', b.password && 'password'].filter(Boolean).join(', ');
+  await log(req, u.tenantId, 'edited', 'Users', b.name, `${what || 'Details'} changed by Sahaasra support`);
+  res.json(platformUserOut(updated));
+});
+
 // ════════ Platform administrators ════════
 platformRouter.get('/platform/admins', async (_req, res) => {
   res.json((await db.user.findMany({ where: { role: 'Super Admin' }, orderBy: { createdAt: 'asc' } })).map(userOut));

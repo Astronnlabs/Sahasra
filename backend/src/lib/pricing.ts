@@ -193,20 +193,26 @@ export async function priceLines(tx: Tx, tenantId: string, lines: BillLine[], op
       if (isSerialTracked(p) && serials.length !== l.qty) throw badRequest(`Scan or pick ${l.qty} IMEI / serial number${l.qty === 1 ? '' : 's'} for ${p.name}.`);
       const option = l.option ? asArray<SellOption>(p.options).find((o) => o.name === l.option) : undefined;
       if (l.option && !option) throw badRequest(`"${l.option}" is not available for ${p.name}.`);
+      const list = asArray<Addon>(p.addons);
       const addons = l.addons.map((name) => {
-        const a = asArray<Addon>(p.addons).find((x) => x.name === name);
+        // Two add-ons may share a name (Campa ₹10 / Campa ₹20): POS then sends "Campa ₹10".
+        const priced = /^(.*\S)\s+₹\s?([\d,]+(?:\.\d+)?)$/.exec(name);
+        const a =
+          list.find((x) => x.name === name) ??
+          (priced ? list.find((x) => x.name.trim().toLowerCase() === priced[1].trim().toLowerCase() && Math.abs(Number(x.price) - Number(priced[2].replace(/,/g, ''))) < 0.005) : undefined);
         if (!a) throw badRequest(`Add-on "${name}" is not available for ${p.name}.`);
         return a;
       });
       const factor = option?.factor && option.factor > 0 ? option.factor : 1;
       const base = option ? Number(option.price) : opts.priceList === 'trade' && num(p.tradePrice) > 0 ? num(p.tradePrice) : num(p.sellingPrice);
-      // Typed-in extras join the item's line; menu-item extras get their own line (stock, GST, cost of that item).
+      // Every add-on is its own line on the bill ("+ Extra Aloo  ₹10"). Typed-in extras use the
+      // item's GST; menu-item extras use that item's stock, GST and cost.
       const typed = addons.filter((a) => !a.productId);
       const linked = addons.filter((a) => a.productId);
-      const rate = round2(base + typed.reduce((s, a) => s + Number(a.price), 0));
-      const name = `${p.name}${option ? ` (${option.name})` : ''}${typed.length ? ` + ${typed.map((a) => a.name).join(', ')}` : ''}`;
-      // The line discount (from POS) is shared across the item and its menu-item extras by value.
-      const discounts = allocate(l.discount, [rate, ...linked.map((a) => Number(a.price))].map((v) => v * l.qty));
+      const rate = round2(base);
+      const name = `${p.name}${option ? ` (${option.name})` : ''}`;
+      // The line discount (from POS) is shared across the item and its extras by value.
+      const discounts = allocate(l.discount, [rate, ...typed.map((a) => Number(a.price)), ...linked.map((a) => Number(a.price))].map((v) => v * l.qty));
       out.push({
         productId: p.id,
         serviceId: null,
@@ -220,10 +226,30 @@ export async function priceLines(tx: Tx, tenantId: string, lines: BillLine[], op
         rate,
         discount: discounts[0],
         gstRate: num(p.gstRate),
-        cost: round2(num(p.purchasePrice) * factor + typed.reduce((s, a) => s + Number(a.cost ?? 0), 0)),
+        cost: round2(num(p.purchasePrice) * factor),
         serials,
         staffId: null,
         staff: '',
+      });
+      typed.forEach((a, i) => {
+        out.push({
+          productId: null,
+          serviceId: null,
+          packageId: null,
+          packageName: '',
+          name: `+ ${a.name}`.slice(0, 200),
+          sku: '',
+          hsn: p.hsn,
+          qty: l.qty,
+          stockQty: 0,
+          rate: round2(Number(a.price)),
+          discount: discounts[i + 1],
+          gstRate: num(p.gstRate),
+          cost: round2(Number(a.cost ?? 0)),
+          serials: [],
+          staffId: null,
+          staff: '',
+        });
       });
       linked.forEach((a, i) => {
         const x = productOf(a.productId!, a.name);
@@ -239,7 +265,7 @@ export async function priceLines(tx: Tx, tenantId: string, lines: BillLine[], op
           qty: l.qty,
           stockQty: x.isSelfProduct ? 0 : l.qty,
           rate: round2(Number(a.price)),
-          discount: discounts[i + 1],
+          discount: discounts[i + 1 + typed.length],
           gstRate: num(x.gstRate),
           cost: round2(Number(a.cost) || num(x.purchasePrice)),
           serials: [],

@@ -54,7 +54,7 @@ fi
 echo "== build"
 rm -rf $WORK/src && mkdir -p $WORK && cp -r $APP/android $WORK/src
 cd $WORK/src
-COUNT=$(git -C $APP rev-list --count HEAD)
+COUNT=$(git -c safe.directory=$APP -C $APP rev-list --count HEAD)
 export ANDROID_HOME=$SDK ANDROID_SDK_ROOT=$SDK SAHAASRA_SIGNING=$KEYS/keystore.properties
 export SAHAASRA_VERSION_CODE=$COUNT SAHAASRA_VERSION_NAME="1.0.$COUNT"
 export GRADLE_USER_HOME=$WORK/gradle-home

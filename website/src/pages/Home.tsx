@@ -16,7 +16,8 @@ import {
 import { Link } from 'react-router-dom';
 import { usePageTitle } from '../components/Layout';
 import { Eyebrow, SectionHead } from '../components/Section';
-import { loginUrl, lowestPrice, signupUrl } from '../config';
+import { AstronLabsLogo } from '../components/AstronLabs';
+import { COMPANY, loginUrl, lowestPrice, signupUrl } from '../config';
 
 const FEATURES: { icon: LucideIcon; title: string; text: string }[] = [
   { icon: Receipt, title: 'Fast POS billing', text: 'GST invoices in seconds with barcode search, discounts, UPI QR, cash, card, credit and split payments. Print on any thermal or A4 printer.' },
@@ -131,6 +132,22 @@ export function HomePage() {
               </li>
             ))}
           </ol>
+        </div>
+      </section>
+
+      {/* Parent company */}
+      <section className="py-16 sm:py-20">
+        <div className="container-x">
+          <div className="card grid items-center gap-8 p-8 sm:p-10 md:grid-cols-[1fr_1.1fr]">
+            <AstronLabsLogo className="mx-auto h-auto max-h-28 max-w-full md:mx-0" />
+            <div>
+              <Eyebrow>Our company</Eyebrow>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">SAHAASRA is a product of {COMPANY.parent}</h2>
+              <p className="muted mt-3 text-[16px] leading-7">
+                {COMPANY.parent} builds software for Indian businesses. SAHAASRA brings billing, stock, staff and GST together, and {COMPANY.parent} develops, hosts and supports it.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 

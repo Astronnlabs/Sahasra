@@ -1,4 +1,5 @@
 import { BarChart3, Boxes, Landmark, LockKeyhole, ReceiptText, UsersRound } from 'lucide-react';
+import { AstronLabsCredit } from '@/components/layout/AstronLabs';
 import { Logo } from '@/components/layout/Logo';
 
 const FEATURES = [
@@ -54,6 +55,7 @@ export function AuthShowcase() {
         <p className="mt-8 flex items-center gap-1.5 text-[13px] text-white/75">
           <LockKeyhole className="h-4 w-4" /> Passwords are encrypted and sessions are secured server-side.
         </p>
+        <AstronLabsCredit white size="md" className="mt-6 text-[13px]" />
       </div>
     </div>
   );

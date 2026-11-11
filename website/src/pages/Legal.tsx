@@ -22,7 +22,7 @@ const Phone = () => <a href={telHref(COMPANY.phone)}>{COMPANY.phone}</a>;
 export function TermsPage() {
   return (
     <LegalPage title="Terms of service">
-      <p>These terms apply when you use the SAHAASRA billing software and website, provided by {COMPANY.legalName} (“SAHAASRA”, “we”). By creating an account you agree to them.</p>
+      <p>These terms apply when you use the SAHAASRA billing software and website, a product of {COMPANY.legalName} (“Astron Labs”, “we”). By creating an account you agree to them.</p>
       <h2>Your account</h2>
       <ul>
         <li>You must give correct business and contact details when you sign up.</li>
@@ -55,7 +55,7 @@ export function TermsPage() {
 export function PrivacyPage() {
   return (
     <LegalPage title="Privacy policy">
-      <p>This policy explains what information {COMPANY.legalName} (“SAHAASRA”, “we”) collects when you use our website and billing software, and how we use it.</p>
+      <p>This policy explains what information {COMPANY.legalName} (“Astron Labs”, “we”), the company behind SAHAASRA, collects when you use our website and billing software, and how we use it.</p>
       <h2>What we collect</h2>
       <ul>
         <li><strong>Account details:</strong> your name, business name and type, city, mobile number, email and a securely hashed password.</li>

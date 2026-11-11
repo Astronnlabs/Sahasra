@@ -2,6 +2,7 @@ import { Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { COMPANY, loginUrl, signupUrl } from '../config';
+import { AstronLabsCredit } from './AstronLabs';
 import { Logo } from './Logo';
 
 const NAV = [
@@ -96,7 +97,8 @@ export function Layout() {
               <Logo className="h-6 w-6" /> SAHAASRA
             </div>
             <p className="muted mt-2 text-sm">GST billing and business software for Indian shops.</p>
-            <p className="muted mt-1 text-sm">© {new Date().getFullYear()} {COMPANY.legalName}. All rights reserved.</p>
+            <AstronLabsCredit className="mt-4" />
+            <p className="muted mt-3 text-sm">© {new Date().getFullYear()} {COMPANY.legalName}. All rights reserved.</p>
           </div>
           <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm" aria-label="Footer">
             {[

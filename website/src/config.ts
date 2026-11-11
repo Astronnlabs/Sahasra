@@ -10,7 +10,10 @@ export const APP_URL = (import.meta.env.VITE_APP_URL as string | undefined)?.rep
 
 export const COMPANY = {
   name: 'SAHAASRA',
-  legalName: 'SAHAASRA',
+  /** The company that owns and runs SAHAASRA. */
+  legalName: 'Astron Labs',
+  parent: 'Astron Labs',
+  parentTagline: 'Precision in every Astra',
   address: 'Add your registered address here',
   email: 'astronnlabs@gmail.com',
   phone: '+91 62908 54388',

@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { ME_KEY } from '@/app/providers/AuthProvider';
 import { FullScreenLoader } from '@/components/feedback/PageSkeleton';
 import { FormField } from '@/components/forms/FormField';
+import { AstronLabsCredit } from '@/components/layout/AstronLabs';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -79,6 +80,9 @@ export function SetupPage() {
             Create owner account
           </Button>
         </form>
+        <div className="mt-7 flex justify-center">
+          <AstronLabsCredit />
+        </div>
       </div>
     </div>
   );

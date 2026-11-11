@@ -7,6 +7,7 @@ import { useWorkspace } from '@/app/providers/WorkspaceProvider';
 import { Tooltip } from '@/components/ui/tooltip';
 import { usePageAccess } from '@/hooks/usePageAccess';
 import { cn } from '@/lib/utils';
+import { AstronLabsCredit } from './AstronLabs';
 import { Logo, LogoMark } from './Logo';
 
 function useNavigation() {
@@ -136,6 +137,7 @@ export function Sidebar() {
             {!collapsed && 'Collapse'}
           </button>
         </Tooltip>
+        {!collapsed && <AstronLabsCredit className="mt-2 px-3" />}
       </div>
     </aside>
   );

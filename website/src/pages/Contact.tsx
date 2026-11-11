@@ -1,6 +1,7 @@
 import { Building2, Clock, Mail, MapPin, Phone, Receipt } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { usePageTitle } from '../components/Layout';
+import { AstronLabsLogo } from '../components/AstronLabs';
 import { PageHead } from '../components/Section';
 import { COMPANY, telHref } from '../config';
 
@@ -19,9 +20,12 @@ export function ContactPage() {
           </dl>
         </div>
         <div className="card p-6">
-          <h2 className="text-lg font-semibold">Company</h2>
+          <div className="flex items-start justify-between gap-4">
+            <h2 className="text-lg font-semibold">Company</h2>
+            <AstronLabsLogo mark className="h-7" />
+          </div>
           <dl className="mt-4 space-y-4">
-            <Row icon={<Building2 />} label="Name">{COMPANY.legalName}</Row>
+            <Row icon={<Building2 />} label="Name">{COMPANY.legalName} (makers of {COMPANY.name})</Row>
             <Row icon={<MapPin />} label="Registered address">{COMPANY.address}</Row>
             {COMPANY.gstin && <Row icon={<Receipt />} label="GSTIN">{COMPANY.gstin}</Row>}
           </dl>

@@ -6,6 +6,7 @@ import { useAuth } from '@/app/providers/AuthProvider';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary';
 import { PageSkeleton } from '@/components/feedback/PageSkeleton';
+import { AstronLabsCredit } from '@/components/layout/AstronLabs';
 import { Logo } from '@/components/layout/Logo';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -80,6 +81,7 @@ export function SuperAdminLayout() {
         <div className="m-3 rounded-xl bg-primary-soft p-3 text-xs text-muted-foreground">
           <p className="font-semibold text-foreground">Sahaasra Platform Console</p>
           Manage every business, user and support request.
+          <AstronLabsCredit className="mt-2.5" />
         </div>
       </aside>
 

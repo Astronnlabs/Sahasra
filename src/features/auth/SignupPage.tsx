@@ -8,6 +8,7 @@ import { BUSINESS_TYPES } from '@/app/config/business';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { FormField } from '@/components/forms/FormField';
+import { AstronLabsCredit } from '@/components/layout/AstronLabs';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { Input, NativeSelect } from '@/components/ui/input';
@@ -162,6 +163,9 @@ export function SignupPage() {
                 Sign in
               </Link>
             </p>
+            <div className="mt-8 flex justify-center">
+              <AstronLabsCredit />
+            </div>
           </div>
         </main>
       </div>

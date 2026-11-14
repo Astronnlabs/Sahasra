@@ -6,7 +6,8 @@ import { InvoiceRenderer } from '@/features/bill-studio/InvoiceRenderer';
 import { PRESET_TEMPLATES, saleToInvoiceData, type InvoiceTemplate } from '@/features/bill-studio/model';
 import { useTemplates } from '@/features/bill-studio/useTemplates';
 import { qk } from '@/hooks/queries';
-import { inNativeApp, nativeSaveFile, nativeShareFile } from '@/lib/bluetooth/native';
+import { blobToBase64, inNativeApp, nativeSaveFile, nativeShareFile } from '@/lib/bluetooth/native';
+import { salesService } from '@/services';
 import { getPrinter, receiptOptions, type SavedPrinter } from '@/lib/bluetooth/printers';
 import type { Bitmap } from '@/lib/escpos/builder';
 import { elementToBitmap } from '@/lib/escpos/raster';
@@ -18,7 +19,7 @@ import { DuplicateJobError, logComputerPrint, printOnBluetooth } from '@/lib/pri
 import { printElement } from '@/lib/share';
 import type { Customer, Sale } from '@/types';
 
-type Mode = 'print' | 'download' | 'dialog' | 'share';
+type Mode = 'print' | 'download' | 'dialog' | 'share' | 'ebill';
 type Job = { sale: Sale; mode: Mode; reprint?: boolean };
 
 /**
@@ -203,6 +204,14 @@ export function useInvoicePrinter() {
           setBusy(false);
           qc.invalidateQueries({ queryKey: PRINTER_STATUS_KEY });
         }
+      } else if (job.mode === 'ebill') {
+        // The bill PDF for the customer's WhatsApp e-bill, made quietly in the background.
+        try {
+          const blob = await elementPdfBlob(el, template.paper);
+          await salesService.attachEbillPdf(sale.id, await blobToBase64(blob));
+        } catch {
+          /* the WhatsApp message is then sent without the PDF */
+        }
       } else if (job.mode === 'share') {
         setBusy(true);
         try {
@@ -265,6 +274,10 @@ export function useInvoicePrinter() {
       setJob({ sale, mode: 'dialog' });
     },
     download: (sale: Sale) => setJob({ sale, mode: 'download' }),
+    /** Makes the bill PDF and hands it to the server for the WhatsApp e-bill. */
+    ebill: (sale: Sale) => setJob({ sale, mode: 'ebill' }),
+    /** True while a bill is being turned into a PDF or sent. */
+    working: !!job,
     /** Shares the bill as a PDF (WhatsApp, email…) where the device allows it. */
     share: (sale: Sale) => setJob({ sale, mode: 'share' }),
     /** True while a bill is being prepared for the printer or a PDF. */

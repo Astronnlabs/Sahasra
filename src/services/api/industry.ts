@@ -1,5 +1,6 @@
 import type { Appointment, JewelleryItem, Kot, KotStatus, Medicine, MenuItem, MetalRate, OrderType, RepairJob, Reservation, RestaurantOrder, RestaurantTable, Room, Sale, TableStatus } from '@/types';
 import { api, resource } from './client';
+import { announceSale } from './saleEvents';
 
 export const restaurantService = {
   menu: () => api.get<MenuItem[]>('/restaurant/menu'),
@@ -18,7 +19,7 @@ export const restaurantService = {
   transfer: (fromId: string, toId: string) => api.post<{ ok: true }>('/restaurant/tables/transfer', { fromId, toId }),
   merge: (targetId: string, otherIds: string[]) => api.post<{ ok: true }>('/restaurant/tables/merge', { targetId, otherIds }),
   /** Creates a paid invoice for the order and frees its table(s). */
-  settle: (orderId: string, method: 'cash' | 'upi' | 'card' = 'cash') => api.post<Sale>(`/restaurant/orders/${orderId}/settle`, { method }),
+  settle: (orderId: string, method: 'cash' | 'upi' | 'card' = 'cash') => api.post<Sale>(`/restaurant/orders/${orderId}/settle`, { method }).then(announceSale),
 };
 
 type ReservationInput = Pick<Reservation, 'guest' | 'phone' | 'roomNumber' | 'checkIn' | 'checkOut' | 'guests' | 'advance' | 'source'>;

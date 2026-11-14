@@ -8,6 +8,8 @@ export interface VaahakAccount {
   businessName: string;
   whatsapp: { connected: boolean; phone: string | null; verifiedName: string | null };
   template: { name: string; status: TemplateStatus; reason: string | null; body: string; footer: string };
+  /** The same message with the bill PDF attached. */
+  pdfTemplate?: { name: string; status: TemplateStatus; reason: string | null };
   wallet: { balance: number; expiresAt: string | null; pricePerBill: number; validDays: number };
 }
 

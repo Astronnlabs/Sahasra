@@ -170,6 +170,20 @@ function Connected({ state, onChange }: { state: EBillingState; onChange: (s: EB
               <Badge tone={st.tone}>{st.label}</Badge>
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">{st.hint}{a.template.reason ? ` ${a.template.reason}` : ''}</p>
+            {a.pdfTemplate && (
+              <>
+                <p className="mt-2.5 flex items-center gap-2 text-[13px] font-medium">
+                  Bill PDF attached <code className="rounded bg-surface px-1.5 py-0.5 text-2xs">{a.pdfTemplate.name}</code>
+                  <Badge tone={statusOf(a.pdfTemplate.status).tone}>{statusOf(a.pdfTemplate.status).label}</Badge>
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {a.pdfTemplate.status === 'APPROVED'
+                    ? 'Customers get the bill PDF with the message.'
+                    : 'Same message with the bill PDF attached. Until WhatsApp approves it, bills are sent as the message only.'}
+                  {a.pdfTemplate.reason ? ` ${a.pdfTemplate.reason}` : ''}
+                </p>
+              </>
+            )}
           </div>
           <Button variant="secondary" size="sm" loading={refresh.isPending} onClick={() => refresh.mutate(undefined)}><RefreshCw /> Check status</Button>
         </div>

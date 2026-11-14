@@ -12,6 +12,8 @@ export interface VaahakAccount {
   businessName: string;
   whatsapp: { connected: boolean; phone: string | null; verifiedName: string | null };
   template: { name: string; status: string; reason: string | null; body: string; footer: string };
+  /** The same message with the bill PDF attached (older VAAHAK versions don't report it). */
+  pdfTemplate?: { name: string; status: string; reason: string | null };
   wallet: { balance: number; expiresAt: string | null; pricePerBill: number; validDays: number };
 }
 
@@ -23,6 +25,8 @@ export interface VaahakSendResult {
   waMessageId?: string | null;
   charged: number;
   balance: number;
+  /** True when the bill PDF went with the message. */
+  pdf?: boolean;
 }
 
 export interface VaahakBillStatus {
@@ -74,6 +78,9 @@ export interface VaahakBill {
   amount: number;
   date?: string;
   businessName?: string;
+  /** The bill PDF, base64 (sent attached once VAAHAK's PDF bill template is approved). */
+  pdf?: string;
+  pdfName?: string;
 }
 
 /** Sends one bill. Sending the same billId again never sends or charges twice. */

@@ -3,24 +3,44 @@ import { notify } from './audit.js';
 import { HttpError } from './http.js';
 import { open } from './secretBox.js';
 import { num } from './serialize.js';
-import { vaahakSendBill, waNumber, type VaahakSendResult } from './vaahak.js';
+import { vaahakSendBill, waNumber, type VaahakBill, type VaahakSendResult } from './vaahak.js';
 
 /** Whether this business has switched on "send bills on WhatsApp". */
 export const eBillingOn = (settings: unknown) => !!settings && typeof settings === 'object' && (settings as Record<string, unknown>).eBillingEnabled === true;
 
+/** How long to wait for the bill PDF from the counter before sending the message without it. */
+const PDF_WAIT_MS = 30_000;
+const waitingForPdf = new Map<string, { tenantId: string; timer: ReturnType<typeof setTimeout> }>();
+
 /**
- * Sends the thank-you bill to the customer's WhatsApp (through VAAHAK) after an invoice is saved.
- * Runs in the background: the bill is never held up or undone by WhatsApp.
+ * Sends the bill to the customer's WhatsApp (through VAAHAK) after an invoice is saved.
+ * The counter's browser makes the bill PDF (exactly the Bill Studio design) and hands it over
+ * within a few seconds; it then goes with the message. If no PDF arrives in 30 seconds the bill
+ * message is sent without it. Runs in the background: the bill is never held up or undone by WhatsApp.
  */
 export function sendBillInBackground(tenantId: string, saleId: string) {
-  setImmediate(() => {
+  const timer = setTimeout(() => {
+    waitingForPdf.delete(saleId);
     sendBill(tenantId, saleId).catch((e) => console.error('e-bill failed', saleId, e));
+  }, PDF_WAIT_MS);
+  waitingForPdf.set(saleId, { tenantId, timer });
+}
+
+/** The bill PDF from the counter: sends the waiting bill now, with the PDF. False if nothing is waiting. */
+export function attachBillPdf(tenantId: string, saleId: string, pdf: Buffer) {
+  const w = waitingForPdf.get(saleId);
+  if (!w || w.tenantId !== tenantId) return false;
+  clearTimeout(w.timer);
+  waitingForPdf.delete(saleId);
+  setImmediate(() => {
+    sendBill(tenantId, saleId, pdf).catch((e) => console.error('e-bill failed', saleId, e));
   });
+  return true;
 }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function sendBill(tenantId: string, saleId: string) {
+async function sendBill(tenantId: string, saleId: string, pdf?: Buffer) {
   const tenant = await db.tenant.findUnique({ where: { id: tenantId }, select: { name: true, settings: true, vaahakLink: true } });
   if (!tenant || !eBillingOn(tenant.settings)) return;
   if (await db.billMessage.findUnique({ where: { saleId }, select: { id: true } })) return; // Already handled.
@@ -45,7 +65,7 @@ async function sendBill(tenantId: string, saleId: string) {
   const row = await db.billMessage.create({ data: { ...base, to, status: 'sending' } }).catch(() => null);
   if (!row) return;
 
-  const bill = {
+  let bill: VaahakBill = {
     billId: sale.id,
     invoiceNo: sale.invoiceNo,
     customerName: sale.customerName,
@@ -53,17 +73,27 @@ async function sendBill(tenantId: string, saleId: string) {
     amount: num(sale.total),
     date: sale.date.toISOString(),
     businessName: tenant.name,
+    // The bill PDF goes with the message once WhatsApp has approved VAAHAK's PDF bill template.
+    ...(pdf ? { pdf: pdf.toString('base64'), pdfName: `${sale.invoiceNo.replace(/[^\w.-]+/g, '-')}.pdf` } : {}),
   };
   const creds = { accountId: link.accountId, key: open(link.keyEnc) };
 
   let result: VaahakSendResult | null = null;
   let error = '';
   // VAAHAK may be waking up (free hosting sleeps): try once more after a short wait.
-  for (let attempt = 0; attempt < 2 && !result; attempt++) {
+  for (let attempt = 0; attempt < 3 && !result; attempt++) {
     try {
       result = await vaahakSendBill(creds, bill);
     } catch (e) {
       error = e instanceof Error ? e.message : 'Could not reach VAAHAK';
+      // A PDF problem (older VAAHAK, file too large…) never stops the bill: send it without the PDF.
+      if (bill.pdf && !(e instanceof HttpError && e.status === 429)) {
+        const { pdf: _p, pdfName: _n, ...plain } = bill;
+        void _p;
+        void _n;
+        bill = plain;
+        continue;
+      }
       const retryable = !(e instanceof HttpError) || e.status >= 500 || e.status === 429;
       if (!retryable) break;
       if (attempt === 0) await wait(20000);

@@ -3,7 +3,7 @@ import { Router, type Request } from 'express';
 import { z } from 'zod';
 import { db, type Tx } from '../db.js';
 import { audit, notify } from '../lib/audit.js';
-import { sendBillInBackground } from '../lib/ebill.js';
+import { attachBillPdf, sendBillInBackground } from '../lib/ebill.js';
 import { crud } from '../lib/crud.js';
 import { badRequest, forbidden, notFound } from '../lib/http.js';
 import { purchaseOut, saleOut, vendorOut } from '../lib/mappers.js';
@@ -76,6 +76,17 @@ transactionsRouter.post('/sales/checkout', requireTenant, guard('pos', 'create')
   await audit(req, 'created', 'Sales', sale.invoiceNo, `Invoice for ₹${num(sale.total)} via ${sale.payment}`);
   sendBillInBackground(tid(req), sale.id);
   res.status(201).json(saleOut(sale));
+});
+
+/**
+ * The bill PDF made at the counter, for the WhatsApp e-bill (sent with the message). Only accepted
+ * for a bill of this business whose e-bill is still waiting to be sent.
+ */
+transactionsRouter.post('/sales/:id/ebill-pdf', requireTenant, async (req, res) => {
+  const { pdf } = z.object({ pdf: z.string().min(10).max(7_000_000) }).parse(req.body);
+  const data = Buffer.from(pdf, 'base64');
+  if (data.subarray(0, 5).toString('latin1') !== '%PDF-' || data.length > 5 * 1024 * 1024) throw badRequest('That is not a PDF bill (or it is larger than 5 MB).');
+  res.json({ accepted: attachBillPdf(tid(req), String(req.params.id), data) });
 });
 
 /** Reserves the next invoice number using the business's prefix and starting number. */

@@ -1,5 +1,6 @@
 import type { Customer, JobCard, JobStatus, Package, PaymentMethod, Product, ProductSerial, Purchase, Sale, SerialLookup, ServiceItem, Vendor } from '@/types';
 import { api, resource } from './client';
+import { announceSale } from './saleEvents';
 
 export type ProductInput = Omit<Product, 'id' | 'variantGroup'>;
 export type PackageInput = Omit<Package, 'id' | 'items'> & { items: Omit<Package['items'][number], 'name'>[] };
@@ -32,7 +33,10 @@ export const jobCardsService = {
   setStatus: (id: string, status: Exclude<JobStatus, 'delivered'>) => api.patch<JobCard>(`/job-cards/${id}/status`, { status }),
   /** Bills the card's parts and labour (less the advance) and marks it delivered. */
   deliver: (id: string, input: { payment: 'cash' | 'upi' | 'card' | 'bank' | 'credit'; discount: number; serials: Record<string, string[]> }) =>
-    api.post<{ job: JobCard; sale: Sale }>(`/job-cards/${id}/deliver`, input),
+    api.post<{ job: JobCard; sale: Sale }>(`/job-cards/${id}/deliver`, input).then((r) => {
+      announceSale(r.sale);
+      return r;
+    }),
 };
 
 export const packagesService = resource<Package, PackageInput>('/packages');

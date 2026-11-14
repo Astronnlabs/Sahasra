@@ -29,6 +29,7 @@ export { productsService, catalogServicesService, packagesService, jobCardsServi
 export { salesService, billStaffService, type BillStaff, purchasesService, expensesService, inventoryService, uploadsService, EXPENSE_CATEGORIES, type CheckoutInput, type PurchaseInput, type ExpenseInput } from './api/transactions';
 export { ebillingService, type EBillingState, type BillMessageRow, type TemplateStatus, type VaahakAccount } from './api/ebilling';
 export { printJobsService, type PrintJobRecord } from './api/printJobs';
+export { SALE_CREATED_EVENT } from './api/saleEvents';
 export { employeesService, type AttendanceRow, type EmployeeWithToday } from './api/people';
 export { restaurantService, hotelService, salonService, jewelleryService, pharmacyService } from './api/industry';
 export {

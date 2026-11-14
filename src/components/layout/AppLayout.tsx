@@ -5,6 +5,7 @@ import { PageSkeleton } from '@/components/feedback/PageSkeleton';
 import { SearchCommand } from '@/components/common/SearchCommand';
 import { Modal } from '@/components/ui/dialog';
 import { AssistantWidget } from '@/features/assistant/AssistantWidget';
+import { EbillPdfSender } from '@/features/sales/EbillPdfSender';
 import { useHotkey } from '@/hooks/useHotkey';
 import { cn } from '@/lib/utils';
 import { MobileBottomNav, MobileNavDrawer } from './MobileNav';
@@ -66,6 +67,7 @@ export function AppLayout() {
       <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
       {!fullBleed && <AssistantWidget />}
       <PrintJobIndicator />
+      <EbillPdfSender />
 
       <Modal open={shortcutsOpen} onOpenChange={setShortcutsOpen} title="Keyboard shortcuts" description="Work faster across Sahaasra." size="sm">
         <ul className="divide-y divide-border pb-2">

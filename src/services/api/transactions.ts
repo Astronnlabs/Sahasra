@@ -48,6 +48,8 @@ export const salesService = {
   checkout: (input: CheckoutInput) => api.post<Sale>('/sales/checkout', input).then(announceSale),
   /** The bill PDF for the customer's WhatsApp e-bill (sent with the message). */
   attachEbillPdf: (id: string, pdf: string) => api.post<{ accepted: boolean }>(`/sales/${id}/ebill-pdf`, { pdf }),
+  /** Whether the bill went out on WhatsApp: none | sending | sent | failed | skipped. */
+  ebillStatus: (id: string) => api.get<{ status: 'none' | 'sending' | 'sent' | 'failed' | 'skipped'; to: string; error: string | null }>(`/sales/${id}/ebill`),
   refund: (id: string, reason?: string) => api.post<Sale>(`/sales/${id}/refund`, { reason }),
   markReturned: (id: string, reason?: string) => api.post<Sale>(`/sales/${id}/return`, { reason }),
   returns: () => api.get<ReturnRecord[]>('/sales/returns'),

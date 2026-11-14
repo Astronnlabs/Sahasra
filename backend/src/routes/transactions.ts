@@ -3,7 +3,7 @@ import { Router, type Request } from 'express';
 import { z } from 'zod';
 import { db, type Tx } from '../db.js';
 import { audit, notify } from '../lib/audit.js';
-import { attachBillPdf, sendBillInBackground } from '../lib/ebill.js';
+import { attachBillPdf, ebillWaiting, sendBillInBackground } from '../lib/ebill.js';
 import { crud } from '../lib/crud.js';
 import { badRequest, forbidden, notFound } from '../lib/http.js';
 import { purchaseOut, saleOut, vendorOut } from '../lib/mappers.js';
@@ -87,6 +87,17 @@ transactionsRouter.post('/sales/:id/ebill-pdf', requireTenant, async (req, res) 
   const data = Buffer.from(pdf, 'base64');
   if (data.subarray(0, 5).toString('latin1') !== '%PDF-' || data.length > 5 * 1024 * 1024) throw badRequest('That is not a PDF bill (or it is larger than 5 MB).');
   res.json({ accepted: attachBillPdf(tid(req), String(req.params.id), data) });
+});
+
+/** Whether a bill's WhatsApp e-bill went out (for the payment screen). */
+transactionsRouter.get('/sales/:id/ebill', requireTenant, guard(['pos', 'sales']), async (req, res) => {
+  const saleId = String(req.params.id);
+  const m = await db.billMessage.findFirst({ where: { saleId, tenantId: tid(req) } });
+  if (!m) {
+    res.json({ status: ebillWaiting(saleId) ? 'sending' : 'none', to: '', error: null });
+    return;
+  }
+  res.json({ status: m.status, to: m.to, error: m.error });
 });
 
 /** Reserves the next invoice number using the business's prefix and starting number. */

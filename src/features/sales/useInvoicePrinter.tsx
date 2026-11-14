@@ -52,7 +52,10 @@ const bluetoothBillPrinter = (): SavedPrinter | null => {
  *  - Otherwise the print window.
  * Printing never touches the sale itself: a failed print can always be repeated.
  */
-export function useInvoicePrinter() {
+export function useInvoicePrinter(opts: { quiet?: boolean } = {}) {
+  // Quiet: print problems are not shown (e.g. the payment screen when bills go on WhatsApp).
+  const quietRef = useRef(!!opts.quiet);
+  quietRef.current = !!opts.quiet;
   const qc = useQueryClient();
   const ws = useWorkspace();
   const { defaultTemplate, templates } = useTemplates();
@@ -89,6 +92,7 @@ export function useInvoicePrinter() {
   const sendBluetooth = async (sale: Sale, bt: SavedPrinter, design: InvoiceTemplate, picture: Bitmap | null, reprint?: boolean) => {
     const customer = sale.customerId ? qc.getQueryData<Customer[]>(qk.customers)?.find((c) => c.id === sale.customerId) : undefined;
     const fail = (message: string) => {
+      if (quietRef.current) return;
       setFailed({ sale, message });
       toast.error(`${sale.invoiceNo} didn’t print`, {
         description: message,
@@ -153,6 +157,7 @@ export function useInvoicePrinter() {
         if (!printElement(el, `Invoice ${sale.invoiceNo}`)) toast.error('Allow pop-ups for this site to print invoices.');
       };
       const fail = (message: string) => {
+        if (quietRef.current) return;
         setFailed({ sale, message });
         toast.error(`${sale.invoiceNo} didn’t print`, {
           description: message,
@@ -192,9 +197,9 @@ export function useInvoicePrinter() {
           } else {
             // Never leave the counter stuck: offer the print window instead.
             const message = e instanceof Error ? e.message : 'Could not print.';
-            setFailed({ sale, message });
             if (sale.id !== 'test') logComputerPrint({ kind: 'bill', reference: sale.invoiceNo, printer: settings.printer || 'Default printer', copies: settings.copies, ok: false, error: message });
-            toast.error(message, {
+            if (!quietRef.current) setFailed({ sale, message });
+            if (!quietRef.current) toast.error(message, {
               description: 'Check the printer in Settings → Printer.',
               action: { label: 'Print window', onClick: () => setJob({ sale, mode: 'dialog' }) },
               duration: 10000,

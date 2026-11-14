@@ -1,5 +1,6 @@
-import { Banknote, Building2, CheckCircle2, CreditCard, Download, HandCoins, MessageCircle, Plus, Printer, RotateCcw, Share2, Smartphone, Split, Trash2, X, type LucideIcon } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Banknote, Building2, CheckCircle2, CreditCard, Download, HandCoins, Loader2, MessageCircle, Plus, Printer, RotateCcw, Share2, Smartphone, Split, Trash2, X, type LucideIcon } from 'lucide-react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useWorkspace } from '@/app/providers/WorkspaceProvider';
 import { QrCode, upiLink } from '@/components/common/Codes';
@@ -12,6 +13,7 @@ import { getPrinterSettings } from '@/lib/printer';
 import { cancelPrintJob, usePrintJobs, type ActiveJob, type LocalPrintJob } from '@/lib/printJobs';
 import { openWhatsApp } from '@/lib/share';
 import { cn } from '@/lib/utils';
+import { salesService } from '@/services';
 import type { PaymentMethod, Sale } from '@/types';
 import type { CartCustomer } from './usePosCart';
 
@@ -23,6 +25,40 @@ const METHODS: { id: PaymentMethod; label: string; icon: LucideIcon }[] = [
   { id: 'credit', label: 'Credit', icon: HandCoins },
   { id: 'split', label: 'Split Payment', icon: Split },
 ];
+
+/** Whether the bill went to the customer on WhatsApp (checked every 2 seconds until it is done). */
+function EbillStatus({ sale }: { sale: Sale }) {
+  const walkIn = !sale.customerId;
+  const [startedAt] = useState(() => Date.now());
+  const q = useQuery({
+    queryKey: ['ebill-status', sale.id],
+    queryFn: () => salesService.ebillStatus(sale.id),
+    enabled: !walkIn,
+    refetchInterval: (query) => {
+      const s = query.state.data?.status;
+      // Keep checking while it is being sent (up to ~2 minutes).
+      return (!s || s === 'sending' || s === 'none') && query.state.dataUpdateCount < 60 ? 2000 : false;
+    },
+  });
+  const s = q.data?.status;
+  const box = (tone: 'success' | 'danger' | 'muted', icon: ReactNode, text: string) => (
+    <p
+      className={cn(
+        'mt-2 flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-[13px] font-medium',
+        tone === 'success' ? 'bg-success-soft text-success' : tone === 'danger' ? 'bg-danger-soft text-danger' : 'bg-surface text-muted-foreground',
+      )}
+    >
+      {icon}
+      {text}
+    </p>
+  );
+  if (walkIn) return box('muted', <MessageCircle className="h-4 w-4" />, 'Walk-in customer — no WhatsApp bill');
+  if (s === 'sent') return box('success', <CheckCircle2 className="h-4 w-4" />, `Bill sent on WhatsApp${q.data?.to ? ` to +${q.data.to}` : ''}`);
+  if (s === 'failed') return box('danger', <MessageCircle className="h-4 w-4" />, `Bill not sent on WhatsApp${q.data?.error ? `: ${q.data.error}` : ''}`);
+  if (s === 'skipped') return box('muted', <MessageCircle className="h-4 w-4" />, `Bill not sent: ${q.data?.error ?? 'no mobile number'}`);
+  if (s === 'none' && Date.now() - startedAt > 90_000) return box('danger', <MessageCircle className="h-4 w-4" />, 'Bill not sent on WhatsApp');
+  return box('muted', <Loader2 className="h-4 w-4 animate-spin" />, 'Sending the bill on WhatsApp…');
+}
 
 /** Where the bill's Bluetooth print has got to. */
 function PrintJobStatus({ job, sending }: { job: LocalPrintJob; sending: ActiveJob | null }) {
@@ -74,7 +110,9 @@ export function PaymentModal({ open, onOpenChange, total, customer, onComplete, 
   const [completed, setCompleted] = useState<Sale | null>(null);
   const { settings, businessName } = useWorkspace();
   const upiId = typeof settings.upiId === 'string' ? settings.upiId : '';
-  const printer = useInvoicePrinter();
+  // With WhatsApp e-bills on, this screen shows whether the bill was sent — not printer problems.
+  const ebillOn = settings.eBillingEnabled === true;
+  const printer = useInvoicePrinter({ quiet: ebillOn });
   const { jobs, active } = usePrintJobs();
   // The latest Bluetooth print of this bill (printing status, cancel, print again).
   const printJob = completed ? jobs.find((j) => j.kind === 'bill' && j.reference === completed.invoiceNo) : undefined;
@@ -138,7 +176,11 @@ export function PaymentModal({ open, onOpenChange, total, customer, onComplete, 
           >
             <Printer /> {printJob ? 'Print again' : 'Print receipt'}
           </Button>
-          {printJob && <PrintJobStatus job={printJob} sending={active?.id === printJob.id ? active : null} />}
+          {ebillOn ? (
+            <EbillStatus sale={completed} />
+          ) : (
+            printJob && <PrintJobStatus job={printJob} sending={active?.id === printJob.id ? active : null} />
+          )}
           <div className="mt-2 grid w-full grid-cols-3 gap-2">
             <Button variant="secondary" loading={printer.downloading} onClick={() => printer.download(completed)}>
               <Download /> PDF
@@ -158,7 +200,7 @@ export function PaymentModal({ open, onOpenChange, total, customer, onComplete, 
               <MessageCircle /> WhatsApp
             </Button>
           </div>
-          {printer.failed && (
+          {printer.failed && !ebillOn && (
             <div className="mt-3 w-full rounded-xl bg-danger-soft px-3 py-2.5 text-left text-[13px]">
               <p className="font-medium text-danger">Bill didn’t print: {printer.failed.message}</p>
               <div className="mt-2 flex flex-wrap gap-2">

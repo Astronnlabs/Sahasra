@@ -26,6 +26,9 @@ export function sendBillInBackground(tenantId: string, saleId: string) {
   waitingForPdf.set(saleId, { tenantId, timer });
 }
 
+/** True while a bill's e-bill is waiting for its PDF (not sent yet). */
+export const ebillWaiting = (saleId: string) => waitingForPdf.has(saleId);
+
 /** The bill PDF from the counter: sends the waiting bill now, with the PDF. False if nothing is waiting. */
 export function attachBillPdf(tenantId: string, saleId: string, pdf: Buffer) {
   const w = waitingForPdf.get(saleId);

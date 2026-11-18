@@ -20,10 +20,12 @@ export const bookingSettingsSchema = z.object({
   step: z.union([z.literal(15), z.literal(30), z.literal(60)]),
   /** How many days ahead customers can book. */
   daysAhead: z.number().int().min(1).max(90),
+  /** Bookings one time slot can take: 0 = one per staff member, otherwise this many in total. */
+  perSlot: z.number().int().min(0).max(20),
 });
 export type BookingSettings = z.infer<typeof bookingSettingsSchema>;
 
-export const DEFAULT_BOOKING: BookingSettings = { enabled: true, open: '10:00', close: '21:00', days: [0, 1, 2, 3, 4, 5, 6], step: 30, daysAhead: 30 };
+export const DEFAULT_BOOKING: BookingSettings = { enabled: true, open: '10:00', close: '21:00', days: [0, 1, 2, 3, 4, 5, 6], step: 30, daysAhead: 30, perSlot: 0 };
 
 export function bookingSettingsOf(settings: unknown): BookingSettings {
   const raw = settings && typeof settings === 'object' ? (settings as Record<string, unknown>).onlineBooking : undefined;
@@ -98,8 +100,8 @@ export async function freeSlots(tenantId: string, settings: BookingSettings, dat
     where: { tenantId, start: { gte: new Date(dayStart.getTime() - 12 * 3600e3), lt: dayEnd }, status: { notIn: ['cancelled', 'no-show'] } },
     select: { staff: true, start: true, durationMins: true },
   });
-  const busy = (who: string, from: number, to: number) =>
-    booked.some((b) => b.staff === who && b.start.getTime() < to && b.start.getTime() + b.durationMins * 60_000 > from);
+  const overlapping = (from: number, to: number, who?: string) =>
+    booked.filter((b) => (!who || b.staff === who) && b.start.getTime() < to && b.start.getTime() + b.durationMins * 60_000 > from).length;
 
   const earliest = Date.now() + 15 * 60_000;
   const out: { time: string; staff: string[] }[] = [];
@@ -107,8 +109,15 @@ export async function freeSlots(tenantId: string, settings: BookingSettings, dat
     const from = istInstant(date, toTime(m)).getTime();
     if (from < earliest) continue;
     const to = from + durationMins * 60_000;
-    const free = people.filter((p) => !busy(p, from, to));
-    if (free.length) out.push({ time: toTime(m), staff: free });
+    if (settings.perSlot > 0) {
+      // A set number of bookings per slot (whole business); each goes to the least busy person.
+      if (overlapping(from, to) >= settings.perSlot) continue;
+      out.push({ time: toTime(m), staff: [...people].sort((a, b) => overlapping(from, to, a) - overlapping(from, to, b)) });
+    } else {
+      // One booking per staff member at a time.
+      const free = people.filter((p) => overlapping(from, to, p) === 0);
+      if (free.length) out.push({ time: toTime(m), staff: free });
+    }
   }
   return out;
 }

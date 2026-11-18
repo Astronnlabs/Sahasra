@@ -135,6 +135,22 @@ export function BookingLinkModal({ open, onOpenChange }: { open: boolean; onOpen
                 </NativeSelect>
               </label>
             </div>
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-medium">Bookings per time slot</span>
+              <NativeSelect value={String(s.perSlot ?? 0)} onChange={(e) => setS({ ...s, perSlot: Number(e.target.value) })}>
+                <option value="0">One per staff member (each person takes one customer at a time)</option>
+                {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
+                  <option key={n} value={n}>
+                    {n} booking{n === 1 ? '' : 's'} at the same time
+                  </option>
+                ))}
+              </NativeSelect>
+              <span className="mt-1 block text-xs text-muted-foreground">
+                {s.perSlot
+                  ? `Up to ${s.perSlot} customer${s.perSlot === 1 ? '' : 's'} can book the same time; each goes to the least busy staff member (or the one they choose).`
+                  : 'A time is free while at least one staff member is free.'}
+              </span>
+            </label>
             <div>
               <span className="mb-1.5 block text-xs font-medium">Open on</span>
               <div className="flex flex-wrap gap-1.5">

@@ -43,6 +43,8 @@ export interface BookingSettings {
   days: number[];
   step: 15 | 30 | 60;
   daysAhead: number;
+  /** Bookings one time slot can take: 0 = one per staff member. */
+  perSlot: number;
 }
 export interface BookingState {
   slug: string | null;

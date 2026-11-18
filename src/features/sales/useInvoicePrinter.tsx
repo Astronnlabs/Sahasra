@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useWorkspace } from '@/app/providers/WorkspaceProvider';
 import { toast } from '@/components/ui/toast';
 import { InvoiceRenderer } from '@/features/bill-studio/InvoiceRenderer';
@@ -69,9 +69,15 @@ export function useInvoicePrinter(opts: { quiet?: boolean } = {}) {
     const s = sale.seller?.template;
     return s ? { ...s, isDefault: false, updatedAt: '' } : defaultTemplate;
   };
-  const billTemplate = job ? designOf(job.sale) : defaultTemplate;
+  // Worked out once per job: a design object made fresh on every screen update would restart the
+  // job's timer again and again (bills for WhatsApp then took over a minute instead of ~2 seconds).
+  const savedDesign = job?.sale.seller?.template;
+  const billTemplate = useMemo<InvoiceTemplate | undefined>(
+    () => (savedDesign ? { ...savedDesign, isDefault: false, updatedAt: '' } : defaultTemplate),
+    [savedDesign, defaultTemplate],
+  );
   const btPrinter = job?.mode === 'print' ? bluetoothBillPrinter() : null;
-  const template = btPrinter ? receiptTemplate(billTemplate, templates, btPrinter.paper) : billTemplate;
+  const template = useMemo(() => (btPrinter ? receiptTemplate(billTemplate, templates, btPrinter.paper) : billTemplate), [btPrinter, billTemplate, templates]);
 
   const sellerOf = (sale: Sale): Seller =>
     sale.seller ?? {

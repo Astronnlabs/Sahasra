@@ -40,6 +40,8 @@ export const ebillingService = {
   get: (refresh = false) => api.get<EBillingState>(refresh ? '/ebilling?refresh=1' : '/ebilling'),
   connect: (input: { accountId: string; key: string }) => api.put<EBillingState>('/ebilling/connect', input),
   disconnect: () => api.del<EBillingState>('/ebilling/connect'),
-  sendTest: (phone: string) => api.post<{ ok: true; charged: number; balance: number }>('/ebilling/test', { phone }),
+  /** `pdf`: a sample bill PDF (base64) to send with the test message. */
+  sendTest: (phone: string, pdf?: string) =>
+    api.post<{ ok: true; charged: number; balance: number; pdf: boolean; pdfRequested: boolean }>('/ebilling/test', { phone, ...(pdf ? { pdf } : {}) }),
   messages: () => api.get<BillMessageRow[]>('/ebilling/messages'),
 };

@@ -1,6 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, CheckCheck, CheckCircle2, Clock3, Link2, MessageCircle, RefreshCw, Send, Unplug, XCircle } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
+import { InvoiceRenderer } from '@/features/bill-studio/InvoiceRenderer';
+import { SAMPLE_INVOICE } from '@/features/bill-studio/model';
+import { useTemplates } from '@/features/bill-studio/useTemplates';
+import { blobToBase64 } from '@/lib/bluetooth/native';
+import { elementPdfBlob } from '@/lib/pdf';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useWorkspace } from '@/app/providers/WorkspaceProvider';
 import { FormField } from '@/components/forms/FormField';
@@ -127,7 +132,33 @@ function Connected({ state, onChange }: { state: EBillingState; onChange: (s: EB
   // Disconnecting also turns e-billing off on the server; reload the session so the switch shows it.
   const { refresh: reloadSession } = useAuth();
   const [phone, setPhone] = useState('');
-  const test = useAppMutation((p: string) => ebillingService.sendTest(p), { invalidate: [['ebilling', 'messages']], success: (r) => `Test bill sent on WhatsApp (${formatINR(r.charged, true)} from your VAAHAK wallet).` });
+  const { settings } = useWorkspace();
+  const { defaultTemplate } = useTemplates();
+  const sampleRef = useRef<HTMLDivElement>(null);
+  const test = useAppMutation(
+    async (p: string) => {
+      // With "Message with bill PDF", the test carries a sample bill in your Bill Studio design.
+      let pdf: string | undefined;
+      const el = sampleRef.current?.firstElementChild as HTMLElement | null;
+      if (settings.eBillTemplate !== 'text' && defaultTemplate && el) {
+        try {
+          pdf = await blobToBase64(await elementPdfBlob(el, defaultTemplate.paper));
+        } catch {
+          /* sent without the PDF */
+        }
+      }
+      return ebillingService.sendTest(p, pdf);
+    },
+    {
+      invalidate: [['ebilling', 'messages']],
+      success: (r) =>
+        r.pdf
+          ? `Test bill with PDF sent on WhatsApp (${formatINR(r.charged, true)} from your VAAHAK wallet).`
+          : r.pdfRequested
+            ? 'Test bill sent, but without the PDF: VAAHAK could not attach it (check that “Bill PDF attached” is Approved).'
+            : `Test bill sent on WhatsApp (${formatINR(r.charged, true)} from your VAAHAK wallet).`,
+    },
+  );
   const ready = !!a && a.whatsapp.connected && a.template.status === 'APPROVED';
 
   return (
@@ -198,6 +229,12 @@ function Connected({ state, onChange }: { state: EBillingState; onChange: (s: EB
         </FormField>
         <Button variant="secondary" disabled={!ready || phone.replace(/\D/g, '').length < 10} loading={test.isPending} onClick={() => test.mutate(phone)}><Send /> Send test</Button>
       </div>
+      {/* Sample bill (off screen) for the test PDF. */}
+      {defaultTemplate && (
+        <div ref={sampleRef} aria-hidden className="pointer-events-none fixed -left-[10000px] top-0">
+          <InvoiceRenderer template={defaultTemplate} data={{ ...SAMPLE_INVOICE, sample: false, number: 'TEST-0001', payment: 'cash', paid: SAMPLE_INVOICE.total }} />
+        </div>
+      )}
     </Section>
   );
 }

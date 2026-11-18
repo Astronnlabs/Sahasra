@@ -45,7 +45,7 @@ export function createApp() {
   // Requests are small, except the bill PDF for WhatsApp e-bills.
   const json = express.json({ limit: '1mb' });
   const pdfJson = express.json({ limit: '8mb' });
-  app.use((req, res, next) => (/^\/api\/sales\/[^/]+\/ebill-pdf$/.test(req.path) ? pdfJson : json)(req, res, next));
+  app.use((req, res, next) => (/^\/api\/(sales\/[^/]+\/ebill-pdf|ebilling\/test)$/.test(req.path) ? pdfJson : json)(req, res, next));
   app.use(cookieParser());
 
   const api = express.Router();

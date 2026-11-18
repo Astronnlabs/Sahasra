@@ -9,7 +9,8 @@ import { vaahakSendBill, waNumber, type VaahakBill, type VaahakSendResult } from
 export const eBillingOn = (settings: unknown) => !!settings && typeof settings === 'object' && (settings as Record<string, unknown>).eBillingEnabled === true;
 
 /** How long to wait for the bill PDF from the counter before sending the message without it. */
-const PDF_WAIT_MS = 30_000;
+// The PDF normally arrives within a few seconds; this is only the fallback if the counter's tab was closed.
+const PDF_WAIT_MS = 120_000;
 const waitingForPdf = new Map<string, { tenantId: string; timer: ReturnType<typeof setTimeout> }>();
 
 /**

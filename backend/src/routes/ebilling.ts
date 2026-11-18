@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db.js';
 import { audit } from '../lib/audit.js';
-import { eBillingOn } from '../lib/ebill.js';
+import { billTemplateChoice, eBillingOn } from '../lib/ebill.js';
 import { badRequest } from '../lib/http.js';
 import { open, seal, secretBoxReady } from '../lib/secretBox.js';
 import { num } from '../lib/serialize.js';
@@ -70,12 +70,15 @@ ebillingRouter.delete('/ebilling/connect', requireTenant, guard('settings', 'edi
 
 /** Sends a sample bill to any number. It is a real WhatsApp message, paid from the VAAHAK wallet. */
 ebillingRouter.post('/ebilling/test', requireTenant, guard('settings', 'edit'), async (req, res) => {
-  const { phone } = z.object({ phone: z.string().trim().max(20) }).parse(req.body);
+  // `pdf`: a sample bill in the business's design, made by the browser (sent when bills go with the PDF).
+  const { phone, pdf } = z.object({ phone: z.string().trim().max(20), pdf: z.string().max(7_000_000).optional() }).parse(req.body);
   const to = waNumber(phone);
   if (!to) throw badRequest('Enter a valid 10-digit mobile number.');
   const tenantId = tid(req);
   const l = await db.vaahakLink.findUnique({ where: { tenantId } });
   if (!l) throw badRequest('Connect VAAHAK first.');
+  const t = await db.tenant.findUniqueOrThrow({ where: { id: tenantId }, select: { settings: true } });
+  const withPdf = !!pdf && billTemplateChoice(t.settings) === 'pdf';
   const r = await vaahakSendBill(credsOf(l), {
     billId: `test-${Date.now().toString(36)}`,
     invoiceNo: 'TEST-0001',
@@ -84,9 +87,10 @@ ebillingRouter.post('/ebilling/test', requireTenant, guard('settings', 'edit'), 
     amount: 1,
     date: new Date().toISOString(),
     businessName: req.auth!.tenant!.name,
+    ...(withPdf ? { pdf, pdfName: 'Sample-bill.pdf' } : {}),
   });
   if (r.status === 'failed') throw badRequest(r.message ?? 'The test message was not sent.');
-  res.json({ ok: true, charged: r.charged, balance: r.balance });
+  res.json({ ok: true, charged: r.charged, balance: r.balance, pdf: !!r.pdf, pdfRequested: withPdf });
 });
 
 /** Recent bills with live WhatsApp delivery status (sent → delivered → read) from VAAHAK. */

@@ -1,8 +1,10 @@
 import { Minus, PauseCircle, Percent, Plus, ReceiptText, ShoppingCart, StickyNote, Trash2, UserRound, X } from 'lucide-react';
 import { useState, type Dispatch } from 'react';
+import { useWorkspace } from '@/app/providers/WorkspaceProvider';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatINR } from '@/lib/format';
+import { effectiveGst, gstSettingOf } from '@/lib/gst';
 import { cn } from '@/lib/utils';
 import type { BillStaff } from '@/services';
 import { CustomerPicker } from './CustomerPicker';
@@ -86,6 +88,7 @@ function LineDiscount({ pct, onChange }: { pct: number; onChange: (pct: number) 
 export function CartPanel({ state, dispatch, totals, onHold, onPay, showTradePrice, staff, serviceStaff, className }: CartPanelProps) {
   const [showNotes, setShowNotes] = useState(!!state.notes);
   const empty = state.lines.length === 0;
+  const gst = gstSettingOf(useWorkspace().settings);
 
   return (
     <section className={cn('flex min-h-0 flex-col bg-card', className)} aria-label="Current bill">
@@ -139,7 +142,7 @@ export function CartPanel({ state, dispatch, totals, onHold, onPay, showTradePri
                     <div className="min-w-0">
                       <p className="truncate text-[13px] font-medium">{l.name}</p>
                       <p className="text-2xs text-subtle">
-                        {formatINR(l.price)}{l.kind === 'package' ? '' : ` · GST ${l.gstRate}%`}{l.stock !== undefined && l.qty * (l.stockFactor ?? 1) > l.stock ? <span className="text-danger"> · only {Number(l.stock.toFixed(3))} in stock</span> : null}
+                        {formatINR(l.price)}{l.kind === 'package' || !gst.enabled ? '' : ` · GST ${effectiveGst(l.gstRate, gst)}%`}{l.stock !== undefined && l.qty * (l.stockFactor ?? 1) > l.stock ? <span className="text-danger"> · only {Number(l.stock.toFixed(3))} in stock</span> : null}
                       </p>
                       {l.contents && !(staff && l.serviceParts?.length) && <p className="line-clamp-2 text-2xs text-muted-foreground">Includes: {l.contents}</p>}
                       {l.serial && <p className="font-mono text-2xs text-muted-foreground">IMEI / S.No. {l.serial}</p>}
@@ -230,10 +233,12 @@ export function CartPanel({ state, dispatch, totals, onHold, onPay, showTradePri
             </dt>
             <dd className="tabular text-success">− {formatINR(totals.discount, true)}</dd>
           </div>
-          <div className="flex justify-between">
-            <dt className="text-muted-foreground">Tax (CGST + SGST)</dt>
-            <dd className="tabular">{formatINR(totals.tax, true)}</dd>
-          </div>
+          {gst.enabled && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Tax (CGST + SGST{gst.fixedRate !== null ? ` · ${gst.fixedRate}%` : ''})</dt>
+              <dd className="tabular">{formatINR(totals.tax, true)}</dd>
+            </div>
+          )}
           {Math.abs(totals.roundOff) >= 0.01 && (
             <div className="flex justify-between text-xs">
               <dt className="text-subtle">Round off</dt>

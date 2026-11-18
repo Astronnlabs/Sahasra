@@ -17,6 +17,7 @@ import { computeTotals, nextInvoiceNo } from './transactions.js';
 import { config } from '../config.js';
 import { bookingSettingsOf, bookingSettingsSchema, newBookingSlug } from '../lib/booking.js';
 import { syncVaahakAppointments } from '../lib/vaahakAppointments.js';
+import { applyGst } from '../lib/gst.js';
 
 export const industryRouter = Router();
 
@@ -218,14 +219,17 @@ industryRouter.post('/restaurant/orders/:id/settle', requireTenant, guard(['rest
     const lines = (o.lines as unknown as OrderLine[]) ?? [];
     if (!lines.length) throw badRequest('Add items before settling the bill.');
     const menu = await tx.product.findMany({ where: { tenantId, id: { in: lines.map((l) => l.menuItemId) } } });
-    const items = lines.map((l) => {
-      const m = menu.find((x) => x.id === l.menuItemId);
-      if (!m) throw badRequest(`${l.name} is no longer on the menu.`);
-      const tracked = !m.isSelfProduct;
-      return { productId: m.id, name: m.name, sku: m.sku, hsn: m.hsn, qty: l.qty, rate: l.price, discount: 0, gstRate: num(m.gstRate), cost: num(m.purchasePrice), stockQty: tracked ? l.qty : 0, product: m };
-    });
-    const t = computeTotals(items, 0);
     const settings = ((await tx.tenant.findUniqueOrThrow({ where: { id: tenantId }, select: { settings: true } })).settings ?? {}) as Record<string, unknown>;
+    const items = applyGst(
+      lines.map((l) => {
+        const m = menu.find((x) => x.id === l.menuItemId);
+        if (!m) throw badRequest(`${l.name} is no longer on the menu.`);
+        const tracked = !m.isSelfProduct;
+        return { productId: m.id, name: m.name, sku: m.sku, hsn: m.hsn, qty: l.qty, rate: l.price, discount: 0, gstRate: num(m.gstRate), cost: num(m.purchasePrice), stockQty: tracked ? l.qty : 0, product: m };
+      }),
+      settings,
+    );
+    const t = computeTotals(items, 0);
     const invoiceNo = await nextInvoiceNo(tx, tenantId, settings);
     const table = o.tableId ? await tx.restaurantTable.findFirst({ where: { id: o.tableId } }) : null;
     const created = await tx.sale.create({

@@ -1,6 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useReducer } from 'react';
+import { useWorkspace } from '@/app/providers/WorkspaceProvider';
 import { toast } from '@/components/ui/toast';
+import { effectiveGst, gstSettingOf, type GstSetting } from '@/lib/gst';
 import { heldBillsService, type HeldBill as ServerHeldBill } from '@/services';
 
 export interface CartLine {
@@ -134,13 +136,13 @@ function reducer(state: CartState, action: CartAction): CartState {
   }
 }
 
-export function computeTotals(state: CartState) {
+export function computeTotals(state: CartState, gst: GstSetting = { enabled: true, fixedRate: null }) {
   const gross = state.lines.reduce((s, l) => s + l.price * l.qty, 0);
   const lineDiscount = state.lines.reduce((s, l) => s + (l.price * l.qty * l.discountPct) / 100, 0);
   const afterLine = gross - lineDiscount;
   const billDiscount = Math.max(0, Math.min(afterLine, state.billDiscount.type === 'pct' ? (afterLine * state.billDiscount.value) / 100 : state.billDiscount.value));
   const ratio = afterLine > 0 ? (afterLine - billDiscount) / afterLine : 1;
-  const tax = state.lines.reduce((s, l) => s + l.price * l.qty * (1 - l.discountPct / 100) * ratio * (l.gstRate / 100), 0);
+  const tax = state.lines.reduce((s, l) => s + l.price * l.qty * (1 - l.discountPct / 100) * ratio * (effectiveGst(l.gstRate, gst) / 100), 0);
   const taxable = afterLine - billDiscount;
   const exact = taxable + tax;
   const total = Math.round(exact);
@@ -164,7 +166,9 @@ export function usePosCart() {
   const [state, dispatch] = useReducer(reducer, EMPTY);
   // Held bills are stored on the server so they survive reloads and other counters can resume them.
   const { data: held = [] } = useQuery({ queryKey: HELD_KEY, queryFn: () => heldBillsService.list<CartState>() });
-  const totals = useMemo(() => computeTotals(state), [state]);
+  const { settings } = useWorkspace();
+  const gst = gstSettingOf(settings);
+  const totals = useMemo(() => computeTotals(state, gst), [state, gst.enabled, gst.fixedRate]); // eslint-disable-line react-hooks/exhaustive-deps
   const refreshHeld = useCallback(() => qc.invalidateQueries({ queryKey: HELD_KEY }), [qc]);
 
   const hold = useCallback(async () => {

@@ -13,6 +13,7 @@ import type { Bitmap } from '@/lib/escpos/builder';
 import { elementToBitmap } from '@/lib/escpos/raster';
 import { invoiceToEscPos, type Seller } from '@/lib/escpos/receipt';
 import { EscPos } from '@/lib/escpos/builder';
+import { gstSettingOf } from '@/lib/gst';
 import { downloadElementPdf, elementPdfBlob } from '@/lib/pdf';
 import { bluetoothIdOf, getPrinterSettings, localPrinters, NoPrinterService, printPdf, PRINTER_STATUS_KEY } from '@/lib/printer';
 import { DuplicateJobError, logComputerPrint, printOnBluetooth } from '@/lib/printJobs';
@@ -119,7 +120,9 @@ export function useInvoicePrinter(opts: { quiet?: boolean } = {}) {
             if (bt.cut) p.cut();
             return p.build();
           }
-          return invoiceToEscPos(design, saleToInvoiceData(sale, customer), sellerOf(sale), receiptOptions(bt));
+          // GST hidden when the business doesn't charge it and this bill has none.
+          const hideGst = !gstSettingOf(ws.settings).enabled && Math.abs(sale.tax) < 0.005;
+          return invoiceToEscPos(design, saleToInvoiceData(sale, customer), sellerOf(sale), { ...receiptOptions(bt), hideGst });
         },
       });
       if (result.status === 'printed') {

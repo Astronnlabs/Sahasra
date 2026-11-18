@@ -23,6 +23,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/toast';
 import { useAppMutation } from '@/hooks/queries';
 import { formatDate, timeAgo } from '@/lib/format';
+import { gstSettingOf } from '@/lib/gst';
 import { isSafeImageFile, sanitizeText } from '@/lib/sanitize';
 import { cn } from '@/lib/utils';
 import { authService, workspaceService } from '@/services';
@@ -252,6 +253,8 @@ export function InvoiceSettings() {
   const validPrefix = /^[A-Za-z0-9/_-]{0,12}$/.test(prefix);
   const validStart = /^\d{1,7}$/.test(start) && Number(start) >= 1;
   return (
+    <>
+    <GstSettings />
     <Section
       title="Invoice Settings"
       description="How new invoice numbers are generated."
@@ -268,6 +271,52 @@ export function InvoiceSettings() {
         <div><p className="text-[13px] font-semibold">Invoice design</p><p className="text-xs text-muted-foreground">Invoices print with your default Bill Studio template.</p></div>
         <Button variant="secondary" asChild><Link to="/bill-studio">Open Bill Studio</Link></Button>
       </div>
+    </Section>
+    </>
+  );
+}
+
+const GST_RATES = [3, 5, 12, 18, 28];
+
+/** GST on bills: off, one rate for everything, or each item's own rate. Saved straight away. */
+function GstSettings() {
+  const { settings } = useWorkspace();
+  const save = useSaveSettings('GST');
+  const g = gstSettingOf(settings);
+  const chip = (active: boolean) =>
+    cn('rounded-xl border px-3.5 py-2 text-[13px] font-medium transition-all disabled:opacity-60', active ? 'border-primary bg-primary-light text-primary ring-2 ring-primary/15' : 'border-border hover:border-primary/40');
+  return (
+    <Section title="GST" description="Whether your bills charge GST, and at what rate. Applies to new bills.">
+      <SwitchRow
+        title="Charge GST on bills"
+        description={
+          g.enabled
+            ? 'On. GST is added to every bill and shown as CGST + SGST.'
+            : 'Off. Bills have no GST: no GST column, no CGST/SGST lines, and the title reads “Invoice” instead of “Tax Invoice”.'
+        }
+        checked={g.enabled}
+        onChange={(v) => save.mutate({ gstEnabled: v })}
+      />
+      {g.enabled && (
+        <div>
+          <p className="mb-2 text-[13px] font-medium">GST rate</p>
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="GST rate">
+            <button type="button" role="radio" aria-checked={g.fixedRate === null} disabled={save.isPending} className={chip(g.fixedRate === null)} onClick={() => save.mutate({ gstFixedRate: null })}>
+              Each item’s own rate
+            </button>
+            {GST_RATES.map((r) => (
+              <button key={r} type="button" role="radio" aria-checked={g.fixedRate === r} disabled={save.isPending} className={chip(g.fixedRate === r)} onClick={() => save.mutate({ gstFixedRate: r })}>
+                {r}%
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {g.fixedRate === null
+              ? 'Each product, service and dish is billed at the GST rate set on it (Products / Services / Menu).'
+              : `Every item on every bill is charged ${g.fixedRate}% GST (${g.fixedRate / 2}% CGST + ${g.fixedRate / 2}% SGST), whatever rate is set on the item.`}
+          </p>
+        </div>
+      )}
     </Section>
   );
 }

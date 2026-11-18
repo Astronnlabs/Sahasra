@@ -1,8 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeftRight, ChefHat, Merge, Minus, Plus, Search, Split, Wallet } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { useWorkspace } from '@/app/providers/WorkspaceProvider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { effectiveGst, gstSettingOf } from '@/lib/gst';
 import { Drawer, Modal } from '@/components/ui/dialog';
 import { Input, NativeSelect } from '@/components/ui/input';
 import { toast } from '@/components/ui/toast';
@@ -77,6 +79,7 @@ export function OrderDrawer({ order, table, tables, onOpenChange }: Props) {
   const [dialog, setDialog] = useState<'transfer' | 'merge' | 'split' | 'settle' | null>(null);
   const [busy, setBusy] = useState(false);
   const kotPrinter = useKotPrinter();
+  const ws = useWorkspace();
 
   useEffect(() => {
     setLines(order?.lines ?? []);
@@ -103,8 +106,11 @@ export function OrderDrawer({ order, table, tables, onOpenChange }: Props) {
   const setQty = (line: OrderLine, qty: number) => update(qty <= 0 ? lines.filter((l) => l.id !== line.id) : lines.map((l) => (l.id === line.id ? { ...l, qty } : l)));
 
   const subtotal = lines.reduce((s, l) => s + l.qty * l.price, 0);
-  const tax = Math.round(subtotal * 0.05);
+  // GST as the bill will charge it (business setting, else each dish's own rate).
+  const gst = gstSettingOf(ws.settings);
+  const tax = Math.round(lines.reduce((s, l) => s + l.qty * l.price * (effectiveGst(menu?.find((m) => m.id === l.menuItemId)?.gstRate ?? 5, gst) / 100), 0));
   const total = subtotal + tax;
+  const gstLabel = !gst.enabled ? '' : gst.fixedRate !== null ? `GST ${gst.fixedRate}%` : 'GST';
   const pendingCount = lines.filter((l) => !l.sentToKitchen).length;
 
   const categories = useMemo(() => ['All', ...Array.from(new Set(menu?.map((m) => m.category) ?? []))], [menu]);
@@ -202,7 +208,7 @@ export function OrderDrawer({ order, table, tables, onOpenChange }: Props) {
               </ul>
               <dl className="space-y-1 border-t border-border px-4 py-3 text-[13px]">
                 <div className="flex justify-between"><dt className="text-muted-foreground">Subtotal</dt><dd className="tabular">{formatINR(subtotal)}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted-foreground">GST 5%</dt><dd className="tabular">{formatINR(tax)}</dd></div>
+                {gstLabel && <div className="flex justify-between"><dt className="text-muted-foreground">{gstLabel}</dt><dd className="tabular">{formatINR(tax)}</dd></div>}
                 <div className="flex justify-between pt-1 text-[15px] font-semibold"><dt>Total</dt><dd className="tabular text-primary">{formatINR(total)}</dd></div>
               </dl>
             </section>

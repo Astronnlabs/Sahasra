@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { db, type Tx } from '../db.js';
 import { audit, notify } from '../lib/audit.js';
 import { attachBillPdf, ebillWaiting, sendBillInBackground } from '../lib/ebill.js';
+import { applyGst } from '../lib/gst.js';
 import { crud } from '../lib/crud.js';
 import { badRequest, forbidden, notFound } from '../lib/http.js';
 import { purchaseOut, saleOut, vendorOut } from '../lib/mappers.js';
@@ -128,7 +129,10 @@ export async function createSale(tx: Tx, req: Request, b: SaleInput, opts: { can
   const tenantId = tid(req);
   const settings = await settingsOf(tx, tenantId);
   const allowNegative = settings.allowNegativeStock !== false;
-  const { items, stock, products, consume } = await priceLines(tx, tenantId, b.items, { canFreeText: opts.canFreeText, priceList: b.priceList });
+  const priced = await priceLines(tx, tenantId, b.items, { canFreeText: opts.canFreeText, priceList: b.priceList });
+  const { stock, products, consume } = priced;
+  // GST as set for the business (off, one rate for all, or each item's own rate).
+  const items = applyGst(priced.items, settings);
 
   const maxPct = Number(settings.maxDiscountPct ?? 100);
   const t = computeTotals(items, b.billDiscount);

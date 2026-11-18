@@ -4,6 +4,7 @@ import { useWorkspace } from '@/app/providers/WorkspaceProvider';
 import { Barcode, QrCode, upiLink } from '@/components/common/Codes';
 import { LogoMark } from '@/components/layout/Logo';
 import { amountInWords, formatINR } from '@/lib/format';
+import { gstSettingOf } from '@/lib/gst';
 import { cn } from '@/lib/utils';
 import { PAPER, SAMPLE_INVOICE, type InvoiceData, type InvoiceTemplate, type TemplateElement } from './model';
 
@@ -118,6 +119,9 @@ export function ElementView({ el, template }: { el: TemplateElement; template: I
   const gst = Math.round((S.cgst + S.sgst + S.igst) * 100) / 100;
   const roundOff = Math.round((S.total - S.taxable - gst) * 100) / 100;
   const thermal = template.paper.startsWith('thermal');
+  // Business doesn't charge GST (Settings → Invoice Settings): no GST lines or column on its bills.
+  // Bills issued earlier with GST still show it.
+  const gstHidden = !gstSettingOf(live.settings).enabled && (S.sample || Math.abs(gst) < 0.005);
   const justify = p.align === 'center' ? 'center' : p.align === 'right' ? 'flex-end' : 'flex-start';
   const style: CSSProperties = { textAlign: p.align, fontSize: p.fontSize, fontWeight: p.fontWeight, marginTop: p.marginTop, color: p.color };
   const block = (children: ReactNode, extra?: CSSProperties) => <div style={{ ...style, ...extra }}>{children}</div>;
@@ -159,8 +163,11 @@ export function ElementView({ el, template }: { el: TemplateElement; template: I
       // Unregistered businesses print no GSTIN line.
       if (!ws.gstin && !S.sample) return null;
       return block(<span><span style={{ opacity: thermal ? 1 : 0.7 }}>GSTIN:</span> <b>{ws.gstin}</b></span>);
-    case 'title':
-      return block(p.text ?? 'TAX INVOICE', { letterSpacing: '0.18em', color: p.color ?? template.accent });
+    case 'title': {
+      // Without GST a bill can't be called a tax invoice.
+      const title = p.text ?? 'TAX INVOICE';
+      return block(gstHidden ? title.replace(/tax\s+invoice/i, 'INVOICE') : title, { letterSpacing: '0.18em', color: p.color ?? template.accent });
+    }
     case 'invoiceMeta':
       return block(
         thermal ? (
@@ -192,7 +199,8 @@ export function ElementView({ el, template }: { el: TemplateElement; template: I
         </div>,
       );
     case 'itemsTable': {
-      const c = p.columns ?? { sku: false, hsn: true, qty: true, rate: true, discount: false, tax: true };
+      const c0 = p.columns ?? { sku: false, hsn: true, qty: true, rate: true, discount: false, tax: true };
+      const c = gstHidden ? { ...c0, tax: false } : c0;
       if (thermal) return <ReceiptItems items={S.items} columns={c} style={style} />;
       const cell = 'px-1.5 py-1';
       return (
@@ -227,6 +235,7 @@ export function ElementView({ el, template }: { el: TemplateElement; template: I
       );
     }
     case 'taxSummary':
+      if (gstHidden) return null;
       return (
         <div style={{ ...style, display: 'flex', justifyContent: justify }}>
           <div style={{ minWidth: thermal ? '100%' : 220 }}>

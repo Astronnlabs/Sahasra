@@ -17,6 +17,8 @@ export interface ReceiptOptions {
   codes: 'image' | 'printer';
   /** Cut the paper at the end (printers with a cutter only). */
   cut: boolean;
+  /** The business doesn't charge GST: no GST lines, column or "tax invoice" title. */
+  hideGst?: boolean;
 }
 
 /** Business details printed on the bill (the snapshot saved with the invoice, or today's details). */
@@ -274,9 +276,11 @@ export async function invoiceToEscPos(template: InvoiceTemplate, S: InvoiceData,
       case 'gstin':
         if (seller.gstin) w.text(`GSTIN: ${seller.gstin}`, { align, bold });
         break;
-      case 'title':
-        w.text(p.text ?? 'TAX INVOICE', { align, bold: true, ...sizeFor(p.fontSize, p.text ?? '', w.cols) });
+      case 'title': {
+        const title = o.hideGst ? (p.text ?? 'TAX INVOICE').replace(/tax\s+invoice/i, 'INVOICE') : (p.text ?? 'TAX INVOICE');
+        w.text(title, { align, bold: true, ...sizeFor(p.fontSize, title, w.cols) });
         break;
+      }
       case 'invoiceMeta':
         w.row('Bill No.', S.number);
         w.row('Date', format(new Date(S.date), 'dd/MM/yyyy, hh:mm a'));
@@ -286,9 +290,10 @@ export async function invoiceToEscPos(template: InvoiceTemplate, S: InvoiceData,
         if (S.customer.gstin) w.row('GSTIN', S.customer.gstin);
         break;
       case 'itemsTable':
-        itemsTable(w, el, S);
+        itemsTable(w, o.hideGst ? { ...el, props: { ...el.props, columns: { ...(el.props.columns ?? { sku: false, hsn: false, qty: true, rate: true, discount: false, tax: false }), tax: false } } } : el, S);
         break;
       case 'taxSummary':
+        if (o.hideGst) break;
         w.row('Taxable value', rs(S.taxable));
         if (p.taxMode === 'inter') w.row('IGST', rs(S.igst || S.cgst + S.sgst));
         else {

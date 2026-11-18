@@ -221,7 +221,8 @@ export function useInvoicePrinter(opts: { quiet?: boolean } = {}) {
       } else if (job.mode === 'ebill') {
         // The bill PDF for the customer's WhatsApp e-bill, made quietly in the background.
         try {
-          const blob = await elementPdfBlob(el, template.paper);
+          // Lighter image than a printed PDF (still sharp on a phone): faster to make and to send.
+          const blob = await elementPdfBlob(el, template.paper, { scale: 1.5, jpeg: 0.8 });
           await salesService.attachEbillPdf(sale.id, await blobToBase64(blob));
         } catch {
           /* the WhatsApp message is then sent without the PDF */
@@ -264,7 +265,7 @@ export function useInvoicePrinter(opts: { quiet?: boolean } = {}) {
         }
       }
       setJob((current) => (current === job ? null : current));
-    }, 400);
+    }, job.mode === 'ebill' ? 150 : 400);
     return () => clearTimeout(t);
   }, [job, template, qc]);
 

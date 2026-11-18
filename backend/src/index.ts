@@ -24,10 +24,19 @@ const stockSweep = setInterval(remindStock, 3 * 3600_000);
 // Appointments forwarded from VAAHAK are copied in every minute.
 startVaahakAppointmentSync();
 
+// VAAHAK on free hosting falls asleep when idle and then needs ~30 s to answer the next bill.
+// A light ping every 4 minutes keeps it awake, so WhatsApp bills go out in seconds.
+const wakeVaahak = () => {
+  fetch(`${config.VAAHAK_API_URL.replace(/\/+$/, '')}/api/health`, { signal: AbortSignal.timeout(60_000) }).catch(() => undefined);
+};
+const vaahakAwake = setInterval(wakeVaahak, 4 * 60_000);
+setTimeout(wakeVaahak, 5_000);
+
 const shutdown = () => {
   clearInterval(sweep);
   clearTimeout(stockTimer);
   clearInterval(stockSweep);
+  clearInterval(vaahakAwake);
   server.close(() => {
     db.$disconnect().finally(() => process.exit(0));
   });

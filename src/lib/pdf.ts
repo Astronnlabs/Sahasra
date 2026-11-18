@@ -12,7 +12,9 @@ const PAGE_MM: Record<PaperSize, { w: number; h: number | null }> = {
  * Turns an on-screen bill into a PDF. A4 / A5 bills are split across pages;
  * thermal receipts become one long strip the width of the roll.
  */
-export async function elementToPdf(el: HTMLElement, paper: PaperSize) {
+export async function elementToPdf(el: HTMLElement, paper: PaperSize, quality: { scale?: number; jpeg?: number } = {}) {
+  const scale = quality.scale ?? 2;
+  const jpeg = quality.jpeg ?? 0.92;
   // Loaded only when a bill is downloaded or printed, so the rest of the app stays light.
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')]);
   await document.fonts?.ready;
@@ -21,13 +23,13 @@ export async function elementToPdf(el: HTMLElement, paper: PaperSize) {
     Promise.all(Array.from(el.querySelectorAll('img')).map((img) => (img.complete ? null : img.decode().catch(() => null)))),
     new Promise((r) => setTimeout(r, 5000)),
   ]);
-  const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false });
+  const canvas = await html2canvas(el, { scale, backgroundColor: '#ffffff', useCORS: true, logging: false });
   const page = PAGE_MM[paper] ?? PAGE_MM.A4;
   const imageH = (canvas.height * page.w) / canvas.width;
 
   if (!page.h) {
     const pdf = new jsPDF({ unit: 'mm', format: [page.w, Math.max(imageH, 40)], orientation: 'portrait', compress: true });
-    pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, page.w, imageH);
+    pdf.addImage(canvas.toDataURL('image/jpeg', jpeg), 'JPEG', 0, 0, page.w, imageH);
     return pdf;
   }
 
@@ -44,7 +46,7 @@ export async function elementToPdf(el: HTMLElement, paper: PaperSize) {
     ctx.fillRect(0, 0, part.width, part.height);
     ctx.drawImage(canvas, 0, -i * slicePx);
     if (i > 0) pdf.addPage([page.w, page.h], 'portrait');
-    pdf.addImage(part.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, page.w, (part.height * page.w) / part.width);
+    pdf.addImage(part.toDataURL('image/jpeg', jpeg), 'JPEG', 0, 0, page.w, (part.height * page.w) / part.width);
   }
   return pdf;
 }
@@ -55,6 +57,6 @@ export async function downloadElementPdf(el: HTMLElement, fileName: string, pape
 }
 
 /** The bill as a PDF file in memory, e.g. to send to the printer. */
-export async function elementPdfBlob(el: HTMLElement, paper: PaperSize) {
-  return (await elementToPdf(el, paper)).output('blob');
+export async function elementPdfBlob(el: HTMLElement, paper: PaperSize, quality?: { scale?: number; jpeg?: number }) {
+  return (await elementToPdf(el, paper, quality)).output('blob');
 }

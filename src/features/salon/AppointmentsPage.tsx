@@ -145,8 +145,8 @@ function BookDrawer({ open, onOpenChange, day }: { open: boolean; onOpenChange: 
 }
 
 export function AppointmentsPage() {
-  // Online and WhatsApp bookings arrive by themselves: refreshed every minute.
-  const { data, isLoading } = useQuery({ queryKey: KEY, queryFn: salonService.appointments.list, refetchInterval: 60_000 });
+  // Online and WhatsApp bookings arrive by themselves: the page refreshes every 15 seconds.
+  const { data, isLoading } = useQuery({ queryKey: KEY, queryFn: salonService.appointments.list, refetchInterval: 15_000 });
   const booking = useQuery({ queryKey: BOOKING_KEY, queryFn: salonService.booking, staleTime: 60_000 });
   const [view, setView] = useState<'schedule' | 'list'>('schedule');
   const [open, setOpen] = useState(false);

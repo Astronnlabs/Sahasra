@@ -6,6 +6,7 @@ import { notify } from '../lib/audit.js';
 import { bookableServices, bookableStaff, bookingSettingsOf, freeSlots, istInstant, staffPool } from '../lib/booking.js';
 import { badRequest, notFound } from '../lib/http.js';
 import { phone } from '../lib/validate.js';
+import { vaahakAppointmentsChanged } from '../lib/vaahakAppointments.js';
 
 /**
  * Public online booking (no login): app.sahaasra.in/book/<slug>. Shows only what a customer
@@ -26,6 +27,18 @@ async function businessBySlug(slug: string) {
   if (!settings.enabled) throw notFound('Booking page');
   return { t, settings };
 }
+
+/**
+ * VAAHAK calls this the moment an appointment is booked or changed there. It carries no
+ * appointment data: SAHAASRA then fetches the changes from VAAHAK with its own connection key,
+ * so a fake call can do nothing but trigger a harmless check.
+ */
+const pingLimiter = rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'Too many requests.' } });
+publicBookingRouter.post('/vaahak/appointments-changed', pingLimiter, async (req, res) => {
+  const { accountId } = z.object({ accountId: z.string().trim().min(10).max(60) }).parse(req.body);
+  await vaahakAppointmentsChanged(accountId);
+  res.json({ ok: true });
+});
 
 publicBookingRouter.get('/booking/:slug', readLimiter, async (req, res) => {
   const { t, settings } = await businessBySlug(String(req.params.slug));

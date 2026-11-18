@@ -20,7 +20,32 @@ const localPhone = (p: string | null | undefined) => {
   return d.length === 12 && d.startsWith('91') ? d.slice(2) : d || '—';
 };
 
-export async function syncVaahakAppointments(tenantId: string) {
+/** One sync per business at a time; a request during a sync runs once more right after it. */
+const inFlight = new Map<string, Promise<{ imported: number; updated: number }>>();
+const again = new Set<string>();
+
+export function syncVaahakAppointments(tenantId: string): Promise<{ imported: number; updated: number }> {
+  const running = inFlight.get(tenantId);
+  if (running) {
+    again.add(tenantId);
+    return running;
+  }
+  const p = syncOnce(tenantId).finally(() => {
+    inFlight.delete(tenantId);
+    if (again.delete(tenantId)) void syncVaahakAppointments(tenantId).catch(() => undefined);
+  });
+  inFlight.set(tenantId, p);
+  return p;
+}
+
+/** VAAHAK says appointments changed for this account: fetch them now (it sends no data itself). */
+export async function vaahakAppointmentsChanged(accountId: string) {
+  const links = await db.vaahakLink.findMany({ where: { accountId }, select: { tenantId: true } });
+  for (const l of links) void syncVaahakAppointments(l.tenantId).catch(() => undefined);
+  return links.length;
+}
+
+async function syncOnce(tenantId: string) {
   const link = await db.vaahakLink.findUnique({ where: { tenantId } });
   if (!link) return { imported: 0, updated: 0 };
   let imported = 0;

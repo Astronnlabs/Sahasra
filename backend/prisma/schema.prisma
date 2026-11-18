@@ -49,6 +49,8 @@ model Tenant {
   /// Billing period of the last plan bought online: monthly | quarterly | yearly
   planPeriod    String?
   logoUploadId  String?
+  /// Public online booking link: app.sahaasra.in/book/<bookingSlug>
+  bookingSlug   String?   @unique
   settings      Json      @default("{}")
   invoiceSeq    Int       @default(0)
   orderSeq      Int       @default(0)
@@ -747,8 +749,14 @@ model Appointment {
   durationMins Int
   price        Decimal  @db.Decimal(10, 2)
   status       String   @default("booked")
+  /// counter (booked at the shop) | online (booking link) | vaahak (forwarded from VAAHAK)
+  source       String   @default("counter")
+  /// The appointment's ID in VAAHAK (forwarded bookings are updated, never duplicated).
+  externalId   String?
+  notes        String   @default("")
   createdAt    DateTime @default(now())
 
+  @@unique([tenantId, externalId])
   @@index([tenantId, start])
 }
 
@@ -927,6 +935,10 @@ model VaahakLink {
   keyEnc       String
   keyPrefix    String   @default("")
   businessName String   @default("")
+  /// Appointments forwarded from VAAHAK: changes up to this time have been copied.
+  appointmentsCursor   DateTime?
+  appointmentsSyncedAt DateTime?
+  appointmentsError    String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

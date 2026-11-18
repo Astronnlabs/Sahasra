@@ -19,6 +19,7 @@ import { jobsRouter } from './routes/jobs.js';
 import { peopleRouter } from './routes/people.js';
 import { platformRouter } from './routes/platform.js';
 import { printJobsRouter } from './routes/printJobs.js';
+import { publicBookingRouter } from './routes/publicBooking.js';
 import { referralsRouter } from './routes/referrals.js';
 import { importMoreRouter } from './routes/importMore.js';
 import { transactionsRouter } from './routes/transactions.js';
@@ -58,6 +59,8 @@ export function createApp() {
   api.use(csrfGuard);
   api.use(loadAuth);
   api.use('/auth', authRouter);
+  // Customers' online booking page (no login).
+  api.use('/public', publicBookingRouter);
   // Everything below needs a signed-in user.
   api.use(requireAuth);
   // Plan page and payments stay reachable while the plan is unpaid.

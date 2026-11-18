@@ -49,6 +49,7 @@ const KitchenPage = page(() => import('@/features/restaurant/KitchenPage'), 'Kit
 const RoomsPage = page(() => import('@/features/hotel/RoomsPage'), 'RoomsPage');
 const ReservationsPage = page(() => import('@/features/hotel/ReservationsPage'), 'ReservationsPage');
 const AppointmentsPage = page(() => import('@/features/salon/AppointmentsPage'), 'AppointmentsPage');
+const BookPage = page(() => import('@/features/booking/BookPage'), 'BookPage');
 const JewelleryPage = page(() => import('@/features/jewellery/JewelleryPage'), 'JewelleryPage');
 const MedicinesPage = page(() => import('@/features/pharmacy/MedicinesPage'), 'MedicinesPage');
 const BillStudioPage = page(() => import('@/features/bill-studio/BillStudioPage'), 'BillStudioPage');
@@ -71,6 +72,15 @@ const SAReferralsPage = page(() => import('@/features/superadmin/ReferralsPage')
 
 const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/login" replace /> },
+  // Customers book appointments here (shared link, no login).
+  {
+    path: '/book/:slug',
+    element: (
+      <Suspense fallback={<FullScreenLoader />}>
+        <BookPage />
+      </Suspense>
+    ),
+  },
   {
     path: '/login',
     element: (

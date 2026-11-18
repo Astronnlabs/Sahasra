@@ -62,7 +62,7 @@ async function call<T>(creds: VaahakCreds, method: 'GET' | 'POST', path: string,
   const json = (await res.json().catch(() => null)) as { success?: boolean; data?: T; error?: { code?: string; message?: string } } | null;
   if (!res.ok || !json?.success) {
     const msg = json?.error?.message ?? `VAAHAK returned an error (${res.status}).`;
-    throw new HttpError(res.status === 401 ? 400 : res.status === 429 ? 429 : 502, res.status === 401 ? `VAAHAK did not accept the connection: ${msg}` : msg);
+    throw new HttpError(res.status === 401 ? 400 : res.status === 429 || res.status === 404 ? res.status : 502, res.status === 401 ? `VAAHAK did not accept the connection: ${msg}` : msg);
   }
   return json.data as T;
 }
@@ -88,6 +88,25 @@ export const vaahakSendBill = (c: VaahakCreds, bill: VaahakBill) => call<VaahakS
 
 export const vaahakBillStatuses = (c: VaahakCreds, billIds: string[]) =>
   billIds.length ? call<VaahakBillStatus[]>(c, 'GET', `/bills?ids=${billIds.map(encodeURIComponent).join(',')}`) : Promise.resolve([]);
+
+/** An appointment forwarded by VAAHAK (booked on WhatsApp, or added in VAAHAK). */
+export interface VaahakAppointment {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  contactPhone: string | null;
+  service: string | null;
+  startsAt: string;
+  durationMinutes: number;
+  notes: string | null;
+  /** CONFIRMED | COMPLETED | CANCELLED | NO_SHOW */
+  status: string;
+  updatedAt: string;
+}
+
+/** Appointments VAAHAK forwards to SAHAASRA that changed after `since`. */
+export const vaahakAppointments = (c: VaahakCreds, since: Date) =>
+  call<{ appointments: VaahakAppointment[]; serverTime: string }>(c, 'GET', `/appointments?since=${encodeURIComponent(since.toISOString())}`);
 
 /** Indian mobile numbers → 91XXXXXXXXXX; numbers already in international form are kept. */
 export function waNumber(phone: string | null | undefined) {

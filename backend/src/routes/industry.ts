@@ -14,6 +14,9 @@ import { autoSku, nextSeq } from '../lib/tenants.js';
 import { int, isoDate, money, phone, positiveMoney, requiredText, text } from '../lib/validate.js';
 import { guard, requireTenant, tid } from '../middleware/auth.js';
 import { computeTotals, nextInvoiceNo } from './transactions.js';
+import { config } from '../config.js';
+import { bookingSettingsOf, bookingSettingsSchema, newBookingSlug } from '../lib/booking.js';
+import { syncVaahakAppointments } from '../lib/vaahakAppointments.js';
 
 export const industryRouter = Router();
 
@@ -329,12 +332,68 @@ industryRouter.delete('/hotel/reservations/:id', requireTenant, guard('hotel-res
 });
 
 // ════════ Salon / services appointments ════════
+
+/** Online booking link, opening hours and the VAAHAK forwarding status. */
+async function bookingState(tenantId: string) {
+  const t = await db.tenant.findUniqueOrThrow({ where: { id: tenantId }, select: { bookingSlug: true, settings: true, vaahakLink: true } });
+  const l = t.vaahakLink;
+  return {
+    slug: t.bookingSlug,
+    url: t.bookingSlug ? `${config.APP_ORIGIN.replace(/\/+$/, '')}/book/${t.bookingSlug}` : null,
+    settings: bookingSettingsOf(t.settings),
+    vaahak: l ? { linked: true, syncedAt: l.appointmentsSyncedAt?.toISOString() ?? null, error: l.appointmentsError } : { linked: false, syncedAt: null, error: null },
+  };
+}
+
+industryRouter.get('/appointments/booking', requireTenant, guard('appointments'), async (req, res) => {
+  res.json(await bookingState(tid(req)));
+});
+
+/** Turns the booking link on (making the link the first time) and saves opening hours. */
+industryRouter.put('/appointments/booking', requireTenant, guard('appointments', 'edit'), async (req, res) => {
+  const b = bookingSettingsSchema.parse(req.body);
+  if (b.close <= b.open) throw badRequest('Closing time must be after opening time.');
+  const tenantId = tid(req);
+  const t = await db.tenant.findUniqueOrThrow({ where: { id: tenantId }, select: { name: true, settings: true, bookingSlug: true } });
+  await db.tenant.update({
+    where: { id: tenantId },
+    data: { settings: { ...((t.settings ?? {}) as Record<string, unknown>), onlineBooking: b } as Prisma.InputJsonValue, ...(t.bookingSlug ? {} : { bookingSlug: newBookingSlug(t.name) }) },
+  });
+  await audit(req, 'edited', 'Appointments', 'Online booking', b.enabled ? `Booking link on · ${b.open}–${b.close}` : 'Booking link turned off');
+  res.json(await bookingState(tenantId));
+});
+
+/** A new link (the old one stops working), e.g. if it was shared by mistake. */
+industryRouter.post('/appointments/booking/new-link', requireTenant, guard('appointments', 'edit'), async (req, res) => {
+  const tenantId = tid(req);
+  const t = await db.tenant.findUniqueOrThrow({ where: { id: tenantId }, select: { name: true } });
+  await db.tenant.update({ where: { id: tenantId }, data: { bookingSlug: newBookingSlug(t.name) } });
+  await audit(req, 'edited', 'Appointments', 'Online booking', 'New booking link made; the old one no longer works');
+  res.json(await bookingState(tenantId));
+});
+
+/** Copies appointments forwarded from VAAHAK now (it also happens every minute). */
+industryRouter.post('/appointments/vaahak-sync', requireTenant, guard('appointments'), async (req, res) => {
+  const r = await syncVaahakAppointments(tid(req));
+  res.json({ ...r, ...(await bookingState(tid(req))) });
+});
+
 crud(industryRouter, {
   path: '/appointments',
   page: 'appointments',
   module: 'Appointments',
   model: db.appointment,
-  create: z.object({ customer: requiredText('Customer', 60, 2), phone, service: requiredText('Service', 80), staff: requiredText('Staff', 60), start: isoDate, durationMins: int.min(5).max(720), price: money, status: z.enum(['booked', 'in-progress', 'completed', 'cancelled', 'no-show']).default('booked') }),
+  create: z.object({
+    customer: requiredText('Customer', 60, 2),
+    phone,
+    service: requiredText('Service', 80),
+    staff: requiredText('Staff', 60),
+    start: isoDate,
+    durationMins: int.min(5).max(720),
+    price: money,
+    status: z.enum(['booked', 'in-progress', 'completed', 'cancelled', 'no-show']).default('booked'),
+    notes: text(300).default(''),
+  }),
   orderBy: { start: 'asc' },
   label: (a) => `${a.customer} · ${a.service}`,
 });

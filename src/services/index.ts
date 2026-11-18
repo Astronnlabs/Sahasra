@@ -31,7 +31,7 @@ export { ebillingService, type EBillingState, type BillMessageRow, type Template
 export { printJobsService, type PrintJobRecord } from './api/printJobs';
 export { SALE_CREATED_EVENT } from './api/saleEvents';
 export { employeesService, type AttendanceRow, type EmployeeWithToday } from './api/people';
-export { restaurantService, hotelService, salonService, jewelleryService, pharmacyService } from './api/industry';
+export { restaurantService, hotelService, salonService, jewelleryService, pharmacyService, publicBookingService, type BookingSettings, type BookingState, type PublicBooking } from './api/industry';
 export {
   usersService,
   rolesService,

@@ -2,6 +2,7 @@ import { createApp } from './app.js';
 import { config } from './config.js';
 import { db } from './db.js';
 import { sweepStockAlerts } from './lib/stockAlerts.js';
+import { startVaahakAppointmentSync } from './lib/vaahakAppointments.js';
 
 const app = createApp();
 
@@ -19,6 +20,9 @@ const sweep = setInterval(() => {
 const remindStock = () => sweepStockAlerts().catch((e) => console.error('stock alert sweep failed', e));
 const stockTimer = setTimeout(remindStock, 15_000);
 const stockSweep = setInterval(remindStock, 3 * 3600_000);
+
+// Appointments forwarded from VAAHAK are copied in every minute.
+startVaahakAppointmentSync();
 
 const shutdown = () => {
   clearInterval(sweep);

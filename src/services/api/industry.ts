@@ -35,8 +35,43 @@ export const hotelService = {
   },
 };
 
+/** Online booking link settings (opening hours) and VAAHAK forwarding status. */
+export interface BookingSettings {
+  enabled: boolean;
+  open: string;
+  close: string;
+  days: number[];
+  step: 15 | 30 | 60;
+  daysAhead: number;
+}
+export interface BookingState {
+  slug: string | null;
+  url: string | null;
+  settings: BookingSettings;
+  vaahak: { linked: boolean; syncedAt: string | null; error: string | null };
+}
+
 export const salonService = {
   appointments: resource<Appointment>('/appointments'),
+  booking: () => api.get<BookingState>('/appointments/booking'),
+  saveBooking: (s: BookingSettings) => api.put<BookingState>('/appointments/booking', s),
+  newBookingLink: () => api.post<BookingState>('/appointments/booking/new-link'),
+  syncVaahak: () => api.post<BookingState & { imported: number; updated: number }>('/appointments/vaahak-sync'),
+};
+
+/** The public booking page (customers, no login). */
+export interface PublicBooking {
+  business: { name: string; address: string; phone: string; logo: string | null };
+  services: { id: string; name: string; durationMins: number; price: number; category: string; staff: string[] }[];
+  staff: string[];
+  hours: { open: string; close: string; days: number[]; daysAhead: number };
+}
+export const publicBookingService = {
+  get: (slug: string) => api.get<PublicBooking>(`/public/booking/${encodeURIComponent(slug)}`),
+  slots: (slug: string, q: { date: string; serviceId: string; staff?: string }) =>
+    api.get<string[]>(`/public/booking/${encodeURIComponent(slug)}/slots`, { date: q.date, serviceId: q.serviceId, ...(q.staff ? { staff: q.staff } : {}) }),
+  book: (slug: string, b: { serviceId: string; staff?: string; date: string; time: string; name: string; phone: string; notes?: string }) =>
+    api.post<{ id: string; business: string; service: string; staff: string; start: string; durationMins: number; price: number }>(`/public/booking/${encodeURIComponent(slug)}`, b),
 };
 
 export const jewelleryService = {

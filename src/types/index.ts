@@ -704,6 +704,9 @@ export interface Appointment {
   durationMins: number;
   price: number;
   status: 'booked' | 'in-progress' | 'completed' | 'cancelled' | 'no-show';
+  /** counter (booked at the shop) | online (booking link) | vaahak (forwarded from VAAHAK) */
+  source?: 'counter' | 'online' | 'vaahak';
+  notes?: string;
 }
 
 export interface JewelleryItem {

@@ -30,6 +30,8 @@ export interface WorkspaceSettings {
   posFirstTab?: 'product' | 'service' | 'package';
   /** Send each bill to the customer's WhatsApp (Settings → E-Billing). */
   eBillingEnabled?: boolean;
+  /** Template bills are sent with: the message with the bill PDF (default) or the message only. */
+  eBillTemplate?: 'pdf' | 'text';
   [key: string]: unknown;
 }
 

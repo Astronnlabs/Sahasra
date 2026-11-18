@@ -19,12 +19,27 @@ const waitingForPdf = new Map<string, { tenantId: string; timer: ReturnType<type
  * message is sent without it. Runs in the background: the bill is never held up or undone by WhatsApp.
  */
 export function sendBillInBackground(tenantId: string, saleId: string) {
+  const send = () => sendBill(tenantId, saleId).catch((e) => console.error('e-bill failed', saleId, e));
   const timer = setTimeout(() => {
     waitingForPdf.delete(saleId);
-    sendBill(tenantId, saleId).catch((e) => console.error('e-bill failed', saleId, e));
+    void send();
   }, PDF_WAIT_MS);
   waitingForPdf.set(saleId, { tenantId, timer });
+  // "Message only" chosen in Settings → E-Billing: no PDF to wait for, send now.
+  void db.tenant
+    .findUnique({ where: { id: tenantId }, select: { settings: true } })
+    .then((t) => {
+      if (billTemplateChoice(t?.settings) !== 'text' || !waitingForPdf.has(saleId)) return;
+      clearTimeout(timer);
+      waitingForPdf.delete(saleId);
+      void send();
+    })
+    .catch(() => undefined);
 }
+
+/** Which approved template bills go out with: the message with the bill PDF (default) or the message only. */
+export const billTemplateChoice = (settings: unknown): 'pdf' | 'text' =>
+  settings && typeof settings === 'object' && (settings as Record<string, unknown>).eBillTemplate === 'text' ? 'text' : 'pdf';
 
 /** True while a bill's e-bill is waiting for its PDF (not sent yet). */
 export const ebillWaiting = (saleId: string) => waitingForPdf.has(saleId);

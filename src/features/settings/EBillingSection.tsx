@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useAppMutation } from '@/hooks/queries';
 import { formatDateTime, formatINR } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { ebillingService, type BillMessageRow, type EBillingState, type TemplateStatus } from '@/services';
 import { Section, useSaveSettings } from './SettingsSections';
 
@@ -189,6 +190,8 @@ function Connected({ state, onChange }: { state: EBillingState; onChange: (s: EB
         </div>
       )}
 
+      {a?.whatsapp.connected && <TemplateChoice pdfStatus={a.pdfTemplate?.status} textName={a.template.name} pdfName={a.pdfTemplate?.name ?? 'vaahak_bill_pdf'} />}
+
       <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
         <FormField label="Send a test bill" hint={ready ? 'Sends a real sample bill to this number on WhatsApp.' : 'Available once WhatsApp is connected in VAAHAK and the template is approved.'}>
           <Input value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^\d+]/g, ''))} inputMode="tel" maxLength={13} placeholder="10-digit mobile number" disabled={!ready} />
@@ -196,6 +199,51 @@ function Connected({ state, onChange }: { state: EBillingState; onChange: (s: EB
         <Button variant="secondary" disabled={!ready || phone.replace(/\D/g, '').length < 10} loading={test.isPending} onClick={() => test.mutate(phone)}><Send /> Send test</Button>
       </div>
     </Section>
+  );
+}
+
+/** Which approved template bills are sent with by default. */
+function TemplateChoice({ pdfStatus, textName, pdfName }: { pdfStatus?: string; textName: string; pdfName: string }) {
+  const { settings } = useWorkspace();
+  const save = useSaveSettings('E-billing');
+  const choice = settings.eBillTemplate === 'text' ? 'text' : 'pdf';
+  const pdfReady = pdfStatus === 'APPROVED';
+  const options = [
+    {
+      id: 'pdf' as const,
+      title: 'Message with bill PDF',
+      name: pdfName,
+      text: pdfReady ? 'The customer gets the message and can open the bill PDF in WhatsApp.' : 'Until WhatsApp approves this template, bills go as the message only.',
+    },
+    { id: 'text' as const, title: 'Message only', name: textName, text: 'Just the message with bill number, amount and date. No PDF.' },
+  ];
+  return (
+    <div>
+      <p className="mb-2 text-[13px] font-medium">Send bills as</p>
+      <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Send bills as">
+        {options.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            role="radio"
+            aria-checked={choice === o.id}
+            disabled={save.isPending}
+            onClick={() => choice !== o.id && save.mutate({ eBillTemplate: o.id })}
+            className={cn(
+              'rounded-xl border p-3.5 text-left transition-all',
+              choice === o.id ? 'border-primary bg-primary-light ring-2 ring-primary/15' : 'border-border hover:border-primary/40',
+            )}
+          >
+            <span className="flex items-center justify-between gap-2">
+              <span className={cn('text-[13px] font-semibold', choice === o.id && 'text-primary')}>{o.title}</span>
+              {choice === o.id && <Badge tone="primary">Default</Badge>}
+            </span>
+            <code className="mt-1 inline-block rounded bg-surface px-1.5 py-0.5 text-2xs">{o.name}</code>
+            <span className="mt-1.5 block text-xs text-muted-foreground">{o.text}</span>
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 

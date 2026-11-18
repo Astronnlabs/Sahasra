@@ -12,7 +12,8 @@ import { useInvoicePrinter } from './useInvoicePrinter';
  */
 export function EbillPdfSender() {
   const { settings } = useWorkspace();
-  const on = settings.eBillingEnabled === true;
+  // Only when bills go out with the PDF (Settings → E-Billing → Send bills as).
+  const on = settings.eBillingEnabled === true && settings.eBillTemplate !== 'text';
   const [queue, setQueue] = useState<Sale[]>([]);
   const maker = useInvoicePrinter();
 

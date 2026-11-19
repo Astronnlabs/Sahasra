@@ -14,6 +14,7 @@ import { PrintJobIndicator } from './PrintJobIndicator';
 import { Sidebar } from './Sidebar';
 import { SupportModeBanner } from './SupportModeBanner';
 import { Topbar } from './Topbar';
+import { TrialBanner } from './TrialBanner';
 
 const SHORTCUTS: [string, string][] = [
   ['Ctrl + K', 'Search everything'],
@@ -48,6 +49,7 @@ export function AppLayout() {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <SupportModeBanner />
+        <TrialBanner />
         <Topbar onOpenSearch={() => setSearchOpen(true)} onOpenMobileNav={() => setNavOpen(true)} onOpenShortcuts={() => setShortcutsOpen(true)} />
         <main id="main" className={cn('flex-1 pb-24 lg:pb-10', !fullBleed && 'px-4 pt-6 md:px-6 lg:px-8 lg:pt-7')}>
           <ErrorBoundary resetKey={location.pathname}>

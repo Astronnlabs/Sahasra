@@ -52,6 +52,8 @@ export function planState(t: Tenant) {
     validTo: validTo?.toISOString() ?? null,
     active,
     daysLeft: active ? Math.ceil((validTo!.getTime() - now) / 864e5) : 0,
+    /** In the free trial (no plan bought yet). */
+    trial: active && !!t.trialEndsAt && !t.planPeriod,
     /** Bought online (self sign-up): the software is locked without a paid plan. */
     required: t.selfSignup && !t.astronLabsService && t.plan === 'build',
     locked: planLocked(t),

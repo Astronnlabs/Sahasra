@@ -67,8 +67,9 @@ export function SignupPage() {
   const submit = form.handleSubmit(async ({ confirm: _confirm, ...v }) => {
     try {
       await signup({ ...v, type: v.type as BusinessType });
-      toast.success(`Welcome to SAHAASRA, ${v.ownerName.split(' ')[0]}! Choose your plan to start.`);
-      navigate('/subscription', { replace: true });
+      // 7-day free trial: straight into the software.
+      toast.success(`Welcome to SAHAASRA, ${v.ownerName.split(' ')[0]}! Your 7-day free trial has started.`);
+      navigate('/dashboard', { replace: true });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Sign-up failed';
       const details = e instanceof ApiError ? (e.details as Record<string, string[]> | undefined) : undefined;
@@ -103,7 +104,7 @@ export function SignupPage() {
               <div className="mb-5">
                 <Logo className="mb-5 hidden lg:inline-flex" />
                 <h1 className="text-[26px] font-semibold tracking-[-0.02em]">Create your account</h1>
-                <p className="mt-1.5 text-[13.5px] text-muted-foreground">Set up your business on SAHAASRA. You’ll choose your plan next.</p>
+                <p className="mt-1.5 text-[13.5px] text-muted-foreground">Start your 7-day free trial. No payment needed today.</p>
               </div>
 
               <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2" noValidate>

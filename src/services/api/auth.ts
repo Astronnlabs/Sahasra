@@ -41,6 +41,8 @@ export interface SubscriptionState {
   daysLeft: number;
   required: boolean;
   locked: boolean;
+  /** In the 7-day free trial (no plan bought yet). */
+  trial?: boolean;
 }
 
 export interface SignupInput {

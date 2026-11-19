@@ -35,6 +35,11 @@ export function Layout() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      {/* Offer strip on every page */}
+      <a href={signupUrl()} className="block bg-gradient-to-r from-brand-700 via-brand-600 to-fuchsia-600 px-4 py-2 text-center text-[13px] font-semibold text-white sm:text-sm">
+        🎉 <span className="uppercase tracking-wide">7 days free</span> · Try every feature — WhatsApp e-bills, booking link, GST billing. No payment needed.{' '}
+        <span className="underline underline-offset-2">Start now →</span>
+      </a>
       <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/85 backdrop-blur dark:border-white/10 dark:bg-[#0d0b16]/85">
         <div className="container-x flex h-16 items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-2.5 text-[17px] font-extrabold tracking-wide" aria-label="SAHAASRA home">
@@ -56,7 +61,7 @@ export function Layout() {
             ))}
             <div className="ml-3 flex items-center gap-2">
               <a className="btn btn-outline btn-sm" href={loginUrl()}>Login</a>
-              <a className="btn btn-primary btn-sm" href={signupUrl()}>Sign up</a>
+              <a className="btn btn-primary btn-sm" href={signupUrl()}>Start free trial</a>
             </div>
           </nav>
 
@@ -80,7 +85,7 @@ export function Layout() {
             ))}
             <div className="grid grid-cols-2 gap-2 pt-2">
               <a className="btn btn-outline" href={loginUrl()}>Login</a>
-              <a className="btn btn-primary" href={signupUrl()}>Sign up</a>
+              <a className="btn btn-primary" href={signupUrl()}>Start free trial</a>
             </div>
           </nav>
         )}

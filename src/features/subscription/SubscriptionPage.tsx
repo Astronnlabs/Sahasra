@@ -148,7 +148,7 @@ export function SubscriptionPage() {
             </span>
             <div>
               <p className="text-[15px] font-semibold">
-                {s.active ? `${plan.name} plan · active` : s.required ? 'No active plan' : `Current plan: ${s.plan}`}
+                {s.active ? (s.trial ? `Free trial · ${s.daysLeft} day${s.daysLeft === 1 ? '' : 's'} left` : `${plan.name} plan · active`) : s.required ? (s.validTo ? 'Your free trial has ended' : 'No active plan') : `Current plan: ${s.plan}`}
               </p>
               <p className="text-[13px] text-muted-foreground">
                 {s.active && s.validTo
@@ -159,7 +159,11 @@ export function SubscriptionPage() {
               </p>
             </div>
           </div>
-          {s.active && <p className="text-xs text-muted-foreground">Buying again adds time on top of your current validity.</p>}
+          {s.active && (
+            <p className="text-xs text-muted-foreground">
+              {s.trial ? 'Buy now and your paid plan starts after the trial — you lose no free days.' : 'Buying again adds time on top of your current validity.'}
+            </p>
+          )}
         </section>
 
         {/* Plan */}

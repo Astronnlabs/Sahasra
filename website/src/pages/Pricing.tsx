@@ -3,11 +3,13 @@ import { usePageTitle } from '../components/Layout';
 import { SectionHead } from '../components/Section';
 import { PLANS, signupUrl } from '../config';
 
-const BASE = ['POS billing with GST invoices', 'Inventory, purchases and vendors', 'Customers, credit and dues', 'Staff, attendance and payroll', 'Reports and GST registers'];
-const MORE = (months: number) => ['Everything in the Build plan', `${months} months of access`, 'Industry screens for your business', 'Bill Studio: your own bill design', 'WhatsApp e-bills through VAAHAK'];
+const BASE = ['POS billing with GST invoices', 'WhatsApp e-bills with the bill PDF', 'Online booking link for customers', 'Inventory, purchases and vendors', 'Staff, attendance and payroll', 'Reports and GST registers'];
+const MORE = (months: number) => ['Everything in the Build plan', `${months} months of access`, 'WhatsApp e-bills with the bill PDF', 'Online booking link for customers', 'Bill Studio: your own bill design', 'Industry screens for your business'];
 
 const FAQ = [
-  ['How do I buy the plan?', 'Sign up, then choose monthly, quarterly or yearly on the plan page inside the software. You’ll pay on PayU’s secure page and come straight back to SAHAASRA with your plan active.'],
+  ['Is the 7-day free trial really free?', 'Yes. Sign up and use every feature for 7 days — no payment and no card needed. Buy a plan only if you want to continue; if you buy during the trial, your paid plan starts after the trial ends.'],
+  ['How do I buy the plan?', 'Inside the software, open the plan page and choose monthly, quarterly or yearly. You’ll pay on PayU’s secure page and come straight back to SAHAASRA with your plan active.'],
+  ['How does the online booking link work?', 'In Appointments, press Booking link to create your link (for example app.sahaasra.in/book/your-shop) and share it. Customers pick a service and a free time; the booking appears in your appointments instantly.'],
   ['I already have an account. How do I renew?', 'Log in and open Settings → Subscription & Billing → Renew plan. The new time is added on top of the days you have left.'],
   ['What happens when my plan ends?', 'Your data stays safe. You’ll see the plan page when you log in, and everything opens again as soon as you renew.'],
   ['Which payment methods can I use?', 'UPI, debit and credit cards, and net banking, through PayU.'],
@@ -22,8 +24,21 @@ export function PricingPage() {
     <>
       <section className="py-14 sm:py-20">
         <div className="container-x">
-          <SectionHead eyebrow="Build plan" title="Simple pricing. Pay the way you like.">
-            One plan with every billing feature. Choose monthly, quarterly or yearly.
+          {/* Free trial, big */}
+          <div className="relative mx-auto mb-12 max-w-5xl overflow-hidden rounded-3xl bg-gradient-to-r from-brand-700 via-brand-600 to-fuchsia-600 px-6 py-8 text-center text-white sm:px-10 sm:py-10">
+            <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_80%_at_100%_0%,rgba(255,255,255,0.2),transparent)]" />
+            <p className="relative text-sm font-bold uppercase tracking-[0.2em] text-white/80">Try before you pay</p>
+            <p className="relative mt-1 text-4xl font-black tracking-tight sm:text-6xl">7 DAYS FREE TRIAL</p>
+            <p className="relative mx-auto mt-3 max-w-2xl text-[16px] text-white/90">
+              Every feature, free for 7 days — GST billing, WhatsApp e-bills with the bill PDF, your online booking link, stock, staff and reports. No payment and no card to start.
+            </p>
+            <a className="btn relative mt-6 bg-white px-7 py-3.5 text-base text-brand-700 hover:bg-brand-50" href={signupUrl()}>
+              Start my free trial
+            </a>
+          </div>
+
+          <SectionHead eyebrow="After your free trial" title="Simple pricing. Pay the way you like.">
+            One plan with every feature. Choose monthly, quarterly or yearly — a plan bought during the trial starts after it ends.
           </SectionHead>
 
           <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-3">
@@ -52,7 +67,7 @@ export function PricingPage() {
                     ))}
                   </ul>
                   <a className={`btn mt-6 w-full ${p.best ? 'btn-primary' : 'btn-outline'}`} href={signupUrl(p.period)}>
-                    Get started
+                    Start 7-day free trial
                   </a>
                 </article>
               );

@@ -68,6 +68,9 @@ authRouter.post('/login', limiter, async (req, res) => {
 // ── Public sign-up: anyone can create a business; it is unlocked once the Build plan is paid ──
 const signupLimiter = rateLimit({ windowMs: 60 * 60_000, limit: 5, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'Too many sign-ups from this network. Please try again in an hour.' } });
 
+/** Free trial for businesses that sign up on the website. */
+const TRIAL_DAYS = 7;
+
 authRouter.post('/signup', signupLimiter, async (req, res) => {
   const body = z
     .object({
@@ -93,6 +96,10 @@ authRouter.post('/signup', signupLimiter, async (req, res) => {
     ownerStatus: 'active',
     selfSignup: true,
   });
+  // 7-day free trial: everything works straight away; a plan bought during the trial starts after it.
+  const now = new Date();
+  const trialEnd = new Date(now.getTime() + TRIAL_DAYS * 864e5);
+  await db.tenant.update({ where: { id: owner.tenantId! }, data: { planValidFrom: now, planValidTo: trialEnd, trialEndsAt: trialEnd, status: 'trial' } });
   await db.user.update({ where: { id: owner.id }, data: { lastLoginAt: new Date() } });
   await createSession(req, res, owner.id, true);
   await db.auditLog.create({ data: { tenantId: owner.tenantId, userId: owner.id, user: owner.name, action: 'created', module: 'Auth', target: body.businessName, details: 'Signed up on the website', ip: req.ip ?? '' } });

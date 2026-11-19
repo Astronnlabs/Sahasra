@@ -24,9 +24,9 @@ export const COMPANY = {
 export type Period = 'monthly' | 'quarterly' | 'yearly';
 
 export const PLANS: { period: Period; label: string; price: number; months: number; note: string; best?: boolean }[] = [
-  { period: 'monthly', label: 'Monthly', price: 1, months: 1, note: 'per month' },
-  { period: 'quarterly', label: 'Quarterly', price: 2, months: 3, note: 'for 3 months' },
-  { period: 'yearly', label: 'Yearly', price: 3, months: 12, note: 'for 12 months', best: true },
+  { period: 'monthly', label: 'Monthly', price: 999, months: 1, note: 'per month' },
+  { period: 'quarterly', label: 'Quarterly', price: 2499, months: 3, note: 'for 3 months' },
+  { period: 'yearly', label: 'Yearly', price: 9999, months: 12, note: 'for 12 months', best: true },
 ];
 
 export const loginUrl = () => `${APP_URL}/login`;

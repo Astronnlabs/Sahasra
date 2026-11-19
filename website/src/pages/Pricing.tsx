@@ -39,7 +39,7 @@ export function PricingPage() {
                   <span className="text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-300">Build</span>
                   <h3 className="mt-1 text-xl font-bold">{p.label}</h3>
                   <p className="mt-4 flex items-baseline gap-2">
-                    <span className="text-4xl font-extrabold tracking-tight">₹{p.price}</span>
+                    <span className="text-4xl font-extrabold tracking-tight">₹{p.price.toLocaleString('en-IN')}</span>
                     <span className="muted text-sm">{p.note}</span>
                   </p>
                   <p className="mt-1 h-5 text-sm font-medium text-emerald-600 dark:text-emerald-400">{save > 0 ? `Save ${save}% compared with monthly` : ''}</p>

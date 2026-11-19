@@ -22,7 +22,7 @@ export const PERIOD_IDS = Object.keys(PERIODS) as Period[];
 
 /** Plans customers can buy themselves. Prices are final amounts in ₹. */
 export const BUY_PLANS = {
-  build: { name: 'Build', prices: { monthly: 1, quarterly: 2, yearly: 3 } as Record<Period, number> },
+  build: { name: 'Build', prices: { monthly: 999, quarterly: 2499, yearly: 9999 } as Record<Period, number> },
 } as const;
 export type BuyPlan = keyof typeof BUY_PLANS;
 export const BUY_PLAN_IDS = Object.keys(BUY_PLANS) as BuyPlan[];

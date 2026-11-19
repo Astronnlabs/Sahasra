@@ -75,7 +75,7 @@ export function HomePage() {
             </div>
             <p className="muted mt-5 flex items-center gap-2 text-sm">
               <Smartphone className="h-4 w-4 text-brand-600 dark:text-brand-300" />
-              Plans from <strong className="text-slate-900 dark:text-white">₹{lowestPrice()}</strong>. Works on computer, tablet and phone.
+              Plans from <strong className="text-slate-900 dark:text-white">₹{lowestPrice().toLocaleString('en-IN')}</strong>. Works on computer, tablet and phone.
             </p>
           </div>
 
@@ -157,7 +157,7 @@ export function HomePage() {
           <div className="relative overflow-hidden rounded-3xl bg-brand-600 px-6 py-12 text-center text-white sm:px-12 sm:py-16">
             <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_80%_at_100%_0%,rgba(255,255,255,0.18),transparent)]" />
             <h2 className="relative text-3xl font-bold tracking-tight sm:text-4xl">Ready to bill smarter?</h2>
-            <p className="relative mx-auto mt-3 max-w-xl text-[17px] text-white/85">Create your SAHAASRA account today. Plans start at ₹{lowestPrice()}.</p>
+            <p className="relative mx-auto mt-3 max-w-xl text-[17px] text-white/85">Create your SAHAASRA account today. Plans start at ₹{lowestPrice().toLocaleString('en-IN')}.</p>
             <div className="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <a className="btn bg-white text-brand-700 hover:bg-brand-50" href={signupUrl()}>Sign up</a>
               <a className="btn border border-white/40 text-white hover:bg-white/10" href={loginUrl()}>Login</a>

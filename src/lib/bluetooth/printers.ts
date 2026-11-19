@@ -228,6 +228,7 @@ async function tryReconnect(id: string) {
   } catch (e) {
     if (e instanceof NeedsTapError) {
       needsTap.add(id);
+      if (!inSoftware()) return;
       // Chrome only lets a website reconnect after a page reload once the user taps (its rule).
       toast(`Reconnect ${p.name}?`, {
         description: webBleRemembers()
@@ -262,6 +263,9 @@ export function reconnectWithTap(id: string, showAll = false) {
 
 let watcher: ReturnType<typeof setInterval> | null = null;
 
+/** Pages outside the signed-in software, where printers are never reconnected or mentioned. */
+const inSoftware = () => typeof window !== 'undefined' && !/^\/((login|signup|setup|subscription|superadmin|book)(\/|$)|$)/.test(window.location.pathname);
+
 /**
  * Keeps saved printers connected: every few seconds a printer that is off or out of range is
  * tried again, so it reconnects by itself as soon as it is switched on. The printers chosen for
@@ -272,6 +276,8 @@ export function startAutoReconnect(preferred: () => string[]) {
   if (inNativeApp()) wireNative();
   const tick = () => {
     if (document.visibilityState === 'hidden' && !inNativeApp()) return;
+    // Only inside the software — never on the login, sign-up, plan or public booking pages.
+    if (!inSoftware()) return;
     const order = [...new Set([...preferred(), ...printers.map((p) => p.id)])];
     // The app holds one Bluetooth connection: only the most important printer is kept connected.
     const candidates = order.map(getPrinter).filter((p): p is SavedPrinter => !!p && p.autoReconnect);
